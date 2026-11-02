@@ -18,14 +18,120 @@ When you begin this step, start a fresh chat so its transcript stays clean. For 
 
 The current plan for each phase, starting from the map in your pitch. Update it as the project evolves.
 
+| Phase | Target result | Scope control |
+|---|---|---|
+| Phase 1 — Ideate and pitch, through Nov 2 | Approved pitch, working title and logo direction, documented sources | Pitch submitted; wait for Studio director approval before resuming implementation |
+| Phase 2 — Prove the core, Nov 2–9 | Real-camera tracking baseline, feasible PopSign subset, first held-out-signer model result | Prove tracking and recognition before expanding the interface |
+| Phase 3 — Revise and integrate, Nov 9–16 | Temporary landmark capture and real ranked results in the browser | Reduce or revise vocabulary if model accuracy is inadequate |
+| Phase 4 — Build and test, Nov 16–30 | Unknown handling, lookup references/filters, accessibility, GitHub Pages build, peer-review version | Learn mode begins only if the primary lookup loop is stable |
+| Phase 5 — Finish and showcase, Nov 30–Dec 7 | Peer-review revisions, public deployment, final evaluation, breakdown and debrief | Fix and simplify before adding stretch work |
+
+Current priorities are Translate (single supported signs) and unknown-sign lookup. Learn mode, saved attempts, uploads, and an LLM re-ranker remain stretch work in that order only after the core passes its checks.
+
 ## Checkpoints
 
 The next few results to build, each with what it should produce and how you will test it against the acceptance checks in `spec.md`. Test each result before moving on, including related behavior that already worked, and commit meaningful working checkpoints.
+
+### Gate — Studio approval
+
+**Result:** Written approval or actionable feedback on `pitch.md`.
+
+**Before continuing:** Incorporate any approved scope change into `pitch.md` only if the Studio director has not yet approved it, then reconcile `spec.md` and this plan. Do not expand application development while approval is pending.
+
+### Checkpoint 1 — Real-camera tracking baseline
+
+**Produce:**
+
+- Run the existing tracking spike in current desktop Chrome on the Developer's Mac.
+- Add visible bounding boxes around detected hands while retaining joint points and connections.
+- Confirm that the raw tracking coordinates stay unmirrored and the preview mirror keeps video and overlay aligned.
+- Provide one clear handedness-correction control if the right-hand test shows the model/browser convention is reversed.
+- Record processed FPS and tracking time for hands only and hands plus the selected body reference points.
+- Record which body landmarks are required during attempts, independently from whether they are displayed.
+- Define canonical names for all selected hand and body landmarks and expose labels in a calibration/debug view without cluttering the normal overlay.
+- Use only a minimal framing and right-hand check at this checkpoint. Do not build the full guided calibration flow before recognition feasibility is established.
+
+**Developer test:**
+
+1. Start and stop the real camera; confirm the camera indicator turns off after Stop.
+2. Move one hand, individual fingers, both hands, and hands across the body; confirm the boxes and skeleton stay aligned.
+3. Raise the right hand with preview mirroring on and off; record the displayed and internal handedness result.
+4. Hide one hand, leave the frame, and return; confirm the status distinguishes no hands, partial tracking, and tracking lost.
+5. Compare hands-only and hands-plus-pose measurements for at least 30 seconds each in the same conditions.
+
+**Pass evidence:** Screenshot or short recording of aligned boxes/joints, the test device and browser version, handedness result, median or representative FPS/tracking time, and any observed failure cases. The Developer decides the first measurable smoothness target from this evidence.
+
+### Checkpoint 2 — Dataset and preprocessing feasibility
+
+**Produce:**
+
+- Confirm the PopSign download method, file organization, metadata, and attribution requirements without downloading the entire 1.1 TB dataset by default.
+- Choose a documented 20–30-sign candidate vocabulary using example count, visual distinction, movement, handedness, and available two-hand examples.
+- Assign each class a stable ASL sign ID separate from its displayed English gloss; document known variants or ambiguous glosses and exclude pairs the planned features cannot responsibly distinguish.
+- Define the versioned landmark-sequence contract: coordinate origin, scale, body-relative location, frame sampling/padding, missing landmarks, handedness, sequence length, and tracker version.
+- Extract landmarks for a small feasibility sample first and inspect them before scaling extraction.
+- Render the extracted hand and body joints over representative source-video frames so alignment, handedness, general body-relative position, and movement can be reviewed visually.
+- Group every training, validation, and test split by signer.
+
+**Test:**
+
+- Trace several source videos through extraction and confirm that the output label, signer, frame order, handedness, and movement are intact.
+- Include different hand sizes, framing, and camera distances in the reviewed sample; confirm that normalized general positions remain comparable without requiring exact distances.
+- Run the same preprocessing logic on a saved or live browser sequence and compare its shape, units, landmark order, and missing-value rules with offline output.
+- Confirm that no raw training video or extracted dataset landmark file is placed in the public app or committed unintentionally.
+
+**Pass evidence:** Vocabulary table with selection reasons and counts, preprocessing-contract version, sample tensor dimensions, signer-separated split counts, license/credit note, and inspection results. Stop and report if the practical download or source metadata cannot support this.
+
+### Checkpoint 3 — First recognition baseline
+
+**Produce:**
+
+- Train the simplest sequence baseline appropriate to the sample rather than starting with multiple competing architectures.
+- Evaluate on held-out signers and record top-1 and top-5 accuracy plus confusion between signs.
+- Test a small negative set containing idle hands, ordinary gestures, unsupported signs, and degraded tracking.
+- Export one candidate model to TensorFlow.js or ONNX only after the offline result is worth integrating.
+
+**Test and decision:**
+
+- Compare the result with a simple baseline such as nearest-neighbor or a small recurrent model, using the same split.
+- The Developer sets the minimum acceptable accuracy after seeing the first result.
+- If accuracy is inadequate, revise or reduce the vocabulary before increasing model complexity. If two approaches fail to produce a viable result, stop and review the data and preprocessing rather than stacking further model variations.
+
+**Pass evidence:** Reproducible training command/configuration, split and vocabulary version, evaluation table, confusion summary, negative-input behavior, model size, and export result.
+
+### Later checkpoints — planned only at milestone level
+
+4. **Browser integration and calibration:** one Scan action, landmark-readiness gate, visible countdown, bounded automatic capture, approved leading/trailing trim, shared preprocessing, replaceable model adapter, ranked results, invalid-scan recovery, and measured result time. After the model proves viable, add first-use calibration for framing, relative scale, mirror/handedness, comfortable signing space, and tracking stability; store numeric settings locally with a reset and schema version, and provide targeted recalibration. Test slow and repeated signs before allowing stability-based early stopping.
+5. **Lookup and unknown handling:** tested threshold or rejection rule, supported-vocabulary view, licensed reference media or attributed links, verified similar-sign explanations, one Try again for clarity path, and handshape/location filters compared against model ranking alone.
+6. **Public and accessible version:** keyboard and focus checks, readable live status, responsive layout, reduced-motion behavior, asset credits, Vite repository base path, GitHub Pages workflow, and a clean production load over HTTPS.
+7. **Optional expansion:** Learn mode only after checkpoints 1–6 pass. Saved attempts, uploads, and the in-browser LLM re-ranker require separate approval and spec revisions.
 
 ## Testing and evidence
 
 Record what you tested and what happened. For peer testing, note what people did or said separately from your interpretation, keep it non-identifying, and record the revisions you made and how you verified them.
 
+### Nov 2 — Tracking spike before the specification
+
+- `npm run build` passed after the Vite/TypeScript tracking spike was created.
+- A headless Chrome run with a synthetic camera loaded the local MediaPipe models and WASM runtime, started and stopped the camera, released its single live track on Stop, updated the tracking status, and produced no console errors.
+- The synthetic video contained no hands, so it did not verify landmark alignment, handedness, two-hand tracking, or tracking recovery.
+- Initial frame counting processed duplicate camera frames. The loop was changed to ignore unchanged `video.currentTime` values. The earlier reported 60 FPS and approximate 12 ms hands-only / 20 ms hands-plus-pose timings are not accepted performance evidence.
+- Real-camera testing remains incomplete and belongs to Checkpoint 1 after Studio approval.
+
+For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
+
 ## Simplification reviews
 
 A project this size invites Agents to pile on code. Redirect them away from bloat, stacked patches, obsolete features, and edge cases that a simpler design or code-structure rule would prevent. At the end of Phases 3, 4, and 5, have the Agent identify these problems, then decide yourself what to change. Record what it found, what you decided and why, and the result. Update the architecture in `spec.md` if the structure changes.
+
+### Phase 3 review — pending
+
+Check for duplicate browser/offline preprocessing, model-specific logic leaking into interface code, and more than one source of truth for landmark capture or labels.
+
+### Phase 4 review — pending
+
+Check for stacked tracking exceptions, inconsistent failure messages, unused experiments or assets, and lookup/filter logic that can be expressed as one shared rule.
+
+### Phase 5 review — pending
+
+Remove obsolete diagnostics and abandoned paths, verify credits and production assets, and re-run the accepted core behavior before final delivery.
