@@ -45,3 +45,11 @@ When the Developer directs the Agent to save a transcript, save the entire text 
 # Project
 
 Fill in as the project takes shape: how to run it locally, how to test it, and any commands or structure that aren't obvious from the code.
+
+## Run locally
+
+Node is installed outside the default PATH: `export PATH="$HOME/.local/node-v26.13.0-darwin-arm64/bin:$PATH"`.
+
+From `app/`: `npm install`, then `npm run fetch-assets` (downloads the MediaPipe models into `public/models` and copies the WASM runtime; both are git-ignored), then `npm run dev` and open the printed localhost URL. `npm run build` type-checks and builds.
+
+Structure: `app/src/camera.ts` (capture), `tracker.ts` (MediaPipe wrapper), `overlay.ts` (drawing), `main.ts` (wiring and status).
