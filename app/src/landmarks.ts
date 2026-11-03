@@ -1,0 +1,38 @@
+export const HAND_LANDMARK_NAMES = [
+  "wrist",
+  "thumb CMC",
+  "thumb MCP",
+  "thumb IP",
+  "thumb tip",
+  "index MCP",
+  "index PIP",
+  "index DIP",
+  "index tip",
+  "middle MCP",
+  "middle PIP",
+  "middle DIP",
+  "middle tip",
+  "ring MCP",
+  "ring PIP",
+  "ring DIP",
+  "ring tip",
+  "pinky MCP",
+  "pinky PIP",
+  "pinky DIP",
+  "pinky tip",
+] as const;
+
+// Only the body anchors used for broad sign location are labeled in debug mode.
+export const POSE_ANCHOR_NAMES = new Map<number, string>([
+  [0, "nose"],
+  [2, "left eye"],
+  [5, "right eye"],
+  [7, "left ear"],
+  [8, "right ear"],
+  [11, "left shoulder"],
+  [12, "right shoulder"],
+  [13, "left elbow"],
+  [14, "right elbow"],
+  [23, "left hip"],
+  [24, "right hip"],
+]);

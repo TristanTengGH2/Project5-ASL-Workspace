@@ -129,6 +129,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - `npm run build` passed and copied the catalog unchanged into the production output.
 - These entries remain structural samples, not selected model vocabulary.
 
+### Nov 2 — Developer real-camera baseline
+
+- The Developer confirmed that hand tracking runs, a raised right hand is labeled `Right`, and the hand boxes, joints, and fullscreen overlay look aligned and usable.
+- The Developer accepted the fullscreen `contain` layout and its overlaid controls as the current UI baseline.
+- Hands-plus-pose became severely laggy and the browser reported that the page had stopped responding. No numeric performance result was accepted from this run.
+- The Developer set a target of more than 22 hand-inference FPS while body reference points are available, with no growing delay or unresponsive interface.
+- Performance changes will be tested and accepted one feature at a time: off-main-thread tracking first, reduced pose cadence only if separately approved, and display-only smoothing only if separately approved.
+- Recognition training must come from sourced PopSign videos rather than recordings of the Developer. Developer webcam input is reserved for later inference and testing.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

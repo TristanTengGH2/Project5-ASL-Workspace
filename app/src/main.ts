@@ -9,6 +9,7 @@ const stage = $("stage");
 const toggleBtn = $<HTMLButtonElement>("toggle-camera");
 const mirror = $<HTMLInputElement>("mirror");
 const usePose = $<HTMLInputElement>("use-pose");
+const showLabels = $<HTMLInputElement>("show-labels");
 const statusEl = $("status");
 
 const camera = new Camera(video);
@@ -50,7 +51,10 @@ function loop(): void {
   $("hands").textContent =
     frame.hands.map((h) => `${h.modelLabel} (${h.score.toFixed(2)})`).join(", ") || "none";
 
-  overlay.render(frame, video.videoWidth, video.videoHeight);
+  overlay.render(frame, video.videoWidth, video.videoHeight, {
+    showLabels: showLabels.checked,
+    mirrored: mirror.checked,
+  });
   setStatus(handsState(frame, now));
 }
 
@@ -78,6 +82,7 @@ async function startCamera(): Promise<void> {
     return;
   }
   toggleBtn.textContent = "Stop camera";
+  document.body.classList.add("camera-running");
   lastHandsSeen = -Infinity;
   lastVideoTime = -1;
   loop();
@@ -89,6 +94,7 @@ function stopCamera(): void {
   overlay.render(null, video.videoWidth, video.videoHeight);
   recent = [];
   toggleBtn.textContent = "Start camera";
+  document.body.classList.remove("camera-running");
   setStatus("Camera is off.");
 }
 

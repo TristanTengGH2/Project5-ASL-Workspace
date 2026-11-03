@@ -1,23 +1,117 @@
 :root {
   --ink: #152c42;
   --coral: #e8756a;
-  --bg: #ffffff;
   --muted: #4a5a6a;
+  --panel: rgba(11, 23, 34, 0.82);
+  --panel-border: rgba(255, 255, 255, 0.18);
 }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; color: var(--ink); background: var(--bg); }
-main { max-width: 720px; margin: 0 auto; padding: 1rem; }
-h1 small { font-weight: 400; color: var(--muted); font-size: 0.6em; }
-.note { color: var(--muted); }
-.controls { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin: 1rem 0; }
-button { font: inherit; padding: 0.6rem 1.1rem; border: 2px solid var(--ink); background: var(--ink); color: #fff; border-radius: 8px; cursor: pointer; }
+html, body { width: 100%; height: 100%; }
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  background: #0b1722;
+}
+button, input { font: inherit; }
+button {
+  padding: 0.7rem 1.2rem;
+  border: 2px solid #fff;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+button:disabled { cursor: wait; opacity: 0.7; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
 
-/* Video and canvas share one box; mirroring is a display-only flip applied to the whole stage. */
-.stage { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #0b1722; border-radius: 8px; overflow: hidden; }
-.stage.mirrored { transform: scaleX(-1); }
-.stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.app-shell { position: relative; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; }
 
-.stats { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; }
-.stats dt { color: var(--muted); }
+/* The full camera frame remains visible. Canvas and video use the same contain geometry. */
+.stage { position: absolute; inset: 0; background: #0b1722; overflow: hidden; }
+.stage.mirrored { transform: scaleX(-1); }
+.stage video, .stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.top-overlay,
+.status-overlay,
+.control-dock {
+  position: absolute;
+  z-index: 2;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.top-overlay {
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+}
+.top-overlay h1 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
+.top-overlay h1 small { font-weight: 400; color: #c8d2dc; font-size: 0.72em; }
+.top-overlay p { margin: 0.25rem 0 0; color: #d8e0e8; font-size: 0.78rem; }
+
+.status-overlay {
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  max-width: min(28rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.camera-control {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: left 160ms ease, top 160ms ease, transform 160ms ease;
+}
+.camera-running .camera-control {
+  left: max(1rem, env(safe-area-inset-left));
+  top: auto;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: none;
+}
+
+.control-dock {
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  width: min(42rem, calc(100vw - 10rem));
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+}
+.controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
+.controls label { white-space: nowrap; font-size: 0.85rem; }
+.controls input { margin-right: 0.35rem; }
+.stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0.65rem 0 0; }
+.stats div { display: flex; gap: 0.4rem; }
+.stats dt { color: #b9c5d0; }
 .stats dd { margin: 0; font-variant-numeric: tabular-nums; }
+.hands-stat { min-width: 12rem; }
+.check-note { margin: 0.5rem 0 0; color: #b9c5d0; font-size: 0.75rem; }
+
+@media (max-width: 700px) {
+  .top-overlay p { display: none; }
+  .status-overlay { top: calc(max(1rem, env(safe-area-inset-top)) + 3.4rem); left: 1rem; right: auto; }
+  .control-dock {
+    left: max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.6rem);
+    width: auto;
+  }
+  .camera-running .camera-control { right: max(1rem, env(safe-area-inset-right)); left: auto; }
+  .controls { gap: 0.5rem 0.8rem; }
+  .check-note { display: none; }
+}

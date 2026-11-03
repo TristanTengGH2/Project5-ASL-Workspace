@@ -8,30 +8,38 @@
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <main>
-      <h1>Handshape <small>tracking spike</small></h1>
-      <p class="note">
-        Technical test of webcam hand tracking. This page does not recognize signs.
-        Video stays in your browser.
-      </p>
-
-      <div class="controls">
-        <button id="toggle-camera" type="button">Start camera</button>
-        <label><input id="mirror" type="checkbox" checked /> Mirror preview</label>
-        <label><input id="use-pose" type="checkbox" /> Add body points (pose)</label>
-      </div>
-
+    <main class="app-shell">
       <div class="stage" id="stage">
         <video id="video" playsinline muted></video>
         <canvas id="overlay"></canvas>
       </div>
 
-      <p id="status" role="status" aria-live="polite">Camera is off.</p>
-      <dl class="stats">
-        <dt>Frames processed / s</dt><dd id="fps">–</dd>
-        <dt>Avg tracking time (ms)</dt><dd id="latency">–</dd>
-        <dt>Hands</dt><dd id="hands">–</dd>
-      </dl>
+      <header class="top-overlay">
+        <h1>Handshape <small>tracking spike</small></h1>
+        <p>Webcam tracking test · Video stays in your browser</p>
+      </header>
+
+      <p id="status" class="status-overlay" role="status" aria-live="polite">Camera is off.</p>
+
+      <div class="camera-control">
+        <button id="toggle-camera" type="button">Start camera</button>
+      </div>
+
+      <section class="control-dock" aria-label="Tracking controls and diagnostics">
+        <div class="controls">
+        <label><input id="mirror" type="checkbox" checked /> Mirror preview</label>
+        <label><input id="use-pose" type="checkbox" /> Add body points (pose)</label>
+        <label><input id="show-labels" type="checkbox" /> Show landmark names</label>
+        </div>
+        <dl class="stats">
+          <div><dt>FPS</dt><dd id="fps">–</dd></div>
+          <div><dt>Tracking</dt><dd><span id="latency">–</span> ms</dd></div>
+          <div class="hands-stat"><dt>Hands</dt><dd id="hands">–</dd></div>
+        </dl>
+        <p class="check-note">
+          Raise your right hand: its box should say Right, even when mirrored.
+        </p>
+      </section>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
