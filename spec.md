@@ -134,6 +134,9 @@ What information the system keeps, where each piece lives, and how it moves and 
 - The capture controller is the source of truth for whether a scan is idle, waiting for readiness, counting down, capturing, ready to classify, or invalid. While capturing, it holds timestamped landmark frames in memory only.
 - The recognition result contains either ranked supported candidates with scores or an unknown result with a reason. It is cleared when a new attempt begins.
 - Supported vocabulary and label metadata come from a versioned project data file derived from the approved dataset subset. Training videos and extracted dataset landmarks are not shipped in the public app.
+- `catalog/sign-catalog.json` is the single source of truth for sign metadata. `catalog/sign-catalog.schema.json` defines its machine-checkable structure, and the catalog validator adds cross-entry checks such as unique IDs and valid source references. A preparation script copies a validated, git-ignored build artifact into `app/public/data/` for the browser.
+- Catalog entries use stable source-scoped IDs, identify their language as ASL (`ase`), keep English glosses separate from IDs, and record source version, license, attribution, status, and verified archive URLs. A `sample` or `candidate` entry is not presented as a supported sign.
+- The catalog contains metadata and source links only. Raw videos, preview media, extracted landmarks, and other dataset files are neither copied into the catalog nor committed to the public app.
 - The first vocabulary contains about 20–30 PopSign signs selected for adequate examples and visual distinction, with some movement-based and two-handed cases when the source data supports them. Selection is documented before training; favorite words alone are not a selection rule.
 - Every model class has a stable ASL sign identifier separate from its displayed English gloss, so alternate meanings or gloss wording do not silently change the model label.
 - A versioned preprocessing contract defines coordinate origin, scale, body-relative location, frame sampling or padding, missing landmarks, handedness, and sequence length. Offline training and browser inference use the same contract.
@@ -201,6 +204,7 @@ Consequential structural decisions, the alternatives considered, and why you cho
 | Reduce or revise vocabulary if accuracy is inadequate | Keep all selected signs and lower expectations silently | Preserves an honest, usable result while model feasibility is still being tested |
 | Use targeted local calibration and recalibration | Require full setup every visit or treat calibration as a model fix | Reduces normal camera/framing variation without blaming the User or claiming to solve recognition errors |
 | Support ASL only and separate sign IDs from English glosses | Treat glosses as universal translations or include unsourced sign languages | Matches the sourced datasets and avoids implying that sign languages or English meanings are interchangeable |
+| Build a small versioned Handshape catalog that references PopSign | Copy PopSign into a new database or claim an authoritative ASL dictionary | Gives the app and training tools one licensed metadata contract while preserving provenance and keeping media out of Git |
 
 ### Provisional evaluation record
 

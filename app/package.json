@@ -5,11 +5,14 @@
   "type": "module",
   "scripts": {
     "fetch-assets": "node scripts/fetch-assets.mjs",
-    "dev": "vite",
-    "build": "tsc && vite build",
+    "validate:catalog": "node scripts/validate-catalog.mjs",
+    "prepare:catalog": "npm run validate:catalog && node scripts/prepare-catalog.mjs",
+    "dev": "npm run prepare:catalog && vite",
+    "build": "npm run prepare:catalog && tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   },

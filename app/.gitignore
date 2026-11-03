@@ -3,3 +3,5 @@ dist
 # Fetched by `npm run fetch-assets`, not committed
 public/models
 public/wasm
+# Generated from the root catalog by `npm run prepare:catalog`.
+public/data/sign-catalog.json

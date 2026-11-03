@@ -50,6 +50,6 @@ Fill in as the project takes shape: how to run it locally, how to test it, and a
 
 Node is installed outside the default PATH: `export PATH="$HOME/.local/node-v26.13.0-darwin-arm64/bin:$PATH"`.
 
-From `app/`: `npm install`, then `npm run fetch-assets` (downloads the MediaPipe models into `public/models` and copies the WASM runtime; both are git-ignored), then `npm run dev` and open the printed localhost URL. `npm run build` type-checks and builds.
+From `app/`: `npm install`, then `npm run fetch-assets` (downloads the MediaPipe models into `public/models` and copies the WASM runtime; both are git-ignored), then `npm run dev` and open the printed localhost URL. `npm run validate:catalog` validates the sign catalog; `npm run prepare:catalog` validates and copies it into the app. `npm run build` prepares the catalog, type-checks, and builds.
 
-Structure: `app/src/camera.ts` (capture), `tracker.ts` (MediaPipe wrapper), `overlay.ts` (drawing), `main.ts` (wiring and status).
+Structure: `app/src/camera.ts` (capture), `tracker.ts` (MediaPipe wrapper), `overlay.ts` (drawing), `main.ts` (wiring and status), `catalog/sign-catalog.json` (source sign metadata), and `catalog/sign-catalog.schema.json` (catalog contract). The app's `public/data/sign-catalog.json` is generated and git-ignored. Downloaded datasets belong in the git-ignored root `datasets/` directory.

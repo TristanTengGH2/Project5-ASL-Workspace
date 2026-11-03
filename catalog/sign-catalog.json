@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "0.1.0",
+  "description": "Structural sample for the Handshape ASL sign catalog. Sample entries are not yet approved model vocabulary.",
+  "language": { "code": "ase", "name": "American Sign Language" },
+  "sources": [
+    {
+      "id": "popsign-v1-0",
+      "downloadId": "popsign_v1_0",
+      "name": "PopSign ASL",
+      "version": "1.0",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "PopSign ASL v1.0, Georgia Institute of Technology and Deaf Professional Arts Network; Starner et al., NeurIPS 2023 Datasets and Benchmarks.",
+      "datasetUrl": "https://signdata.cc.gatech.edu/view/datasets/popsign_v1_0/",
+      "downloadGuideUrl": "https://signdata.cc.gatech.edu/view/guides/downloading_popsign/",
+      "verifiedAt": "2026-11-02",
+      "notes": [
+        "Per-sign v1.0 archive routes were verified before this catalog sample was created.",
+        "Website preview media is not a catalog asset and must not be copied into the app."
+      ]
+    }
+  ],
+  "signs": [
+    {
+      "id": "popsign-v1-0:game:after",
+      "language": "ase",
+      "displayGloss": "after",
+      "englishGlosses": ["after"],
+      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "after" },
+      "status": "sample",
+      "archives": {
+        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/after.tar",
+        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/after.tar",
+        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/after.tar"
+      },
+      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
+    },
+    {
+      "id": "popsign-v1-0:game:hear",
+      "language": "ase",
+      "displayGloss": "hear",
+      "englishGlosses": ["hear"],
+      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "hear" },
+      "status": "sample",
+      "archives": {
+        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/hear.tar",
+        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/hear.tar",
+        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/hear.tar"
+      },
+      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
+    },
+    {
+      "id": "popsign-v1-0:game:man",
+      "language": "ase",
+      "displayGloss": "man",
+      "englishGlosses": ["man"],
+      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "man" },
+      "status": "sample",
+      "archives": {
+        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/man.tar",
+        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/man.tar",
+        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/man.tar"
+      },
+      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
+    },
+    {
+      "id": "popsign-v1-0:game:pen",
+      "language": "ase",
+      "displayGloss": "pen",
+      "englishGlosses": ["pen"],
+      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "pen" },
+      "status": "sample",
+      "archives": {
+        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/pen.tar",
+        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/pen.tar",
+        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/pen.tar"
+      },
+      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
+    },
+    {
+      "id": "popsign-v1-0:game:puppy",
+      "language": "ase",
+      "displayGloss": "puppy",
+      "englishGlosses": ["puppy"],
+      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "puppy" },
+      "status": "sample",
+      "archives": {
+        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/puppy.tar",
+        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/puppy.tar",
+        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/puppy.tar"
+      },
+      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
+    }
+  ]
+}

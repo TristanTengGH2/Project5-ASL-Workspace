@@ -20,7 +20,7 @@ The current plan for each phase, starting from the map in your pitch. Update it 
 
 | Phase | Target result | Scope control |
 |---|---|---|
-| Phase 1 — Ideate and pitch, through Nov 2 | Approved pitch, working title and logo direction, documented sources | Pitch submitted; wait for Studio director approval before resuming implementation |
+| Phase 1 — Ideate and pitch, through Nov 2 | Approved pitch, working title and logo direction, documented sources | Studio approval reported by the Developer on Nov 2; approved pitch remains frozen |
 | Phase 2 — Prove the core, Nov 2–9 | Real-camera tracking baseline, feasible PopSign subset, first held-out-signer model result | Prove tracking and recognition before expanding the interface |
 | Phase 3 — Revise and integrate, Nov 9–16 | Temporary landmark capture and real ranked results in the browser | Reduce or revise vocabulary if model accuracy is inadequate |
 | Phase 4 — Build and test, Nov 16–30 | Unknown handling, lookup references/filters, accessibility, GitHub Pages build, peer-review version | Learn mode begins only if the primary lookup loop is stable |
@@ -34,9 +34,9 @@ The next few results to build, each with what it should produce and how you will
 
 ### Gate — Studio approval
 
-**Result:** Written approval or actionable feedback on `pitch.md`.
+**Result:** Satisfied Nov 2. The Developer reported that the Studio director approved the idea. No approval conditions have been recorded in this repository.
 
-**Before continuing:** Incorporate any approved scope change into `pitch.md` only if the Studio director has not yet approved it, then reconcile `spec.md` and this plan. Do not expand application development while approval is pending.
+**After approval:** Do not edit the approved `pitch.md`. Record later scope decisions in `research.md`, then reconcile `spec.md` and this plan.
 
 ### Checkpoint 1 — Real-camera tracking baseline
 
@@ -66,6 +66,9 @@ The next few results to build, each with what it should produce and how you will
 **Produce:**
 
 - Confirm the PopSign download method, file organization, metadata, and attribution requirements without downloading the entire 1.1 TB dataset by default.
+- Pin the first catalog to `popsign_v1_0`, whose per-sign archive route was verified on Nov 2. Do not mix it with the currently inconsistent v2.1 page or claim v2.1 files are available until its download route is verified.
+- Define and validate the versioned sign-catalog schema, then create a five-sign structural sample with stable IDs, English glosses, source/license fields, status, and verified train/validation/test archive URLs.
+- Keep raw videos, preview media, and extracted landmarks out of Git; catalog source URLs do not authorize copying preview assets.
 - Choose a documented 20–30-sign candidate vocabulary using example count, visual distinction, movement, handedness, and available two-hand examples.
 - Assign each class a stable ASL sign ID separate from its displayed English gloss; document known variants or ambiguous glosses and exclude pairs the planned features cannot responsibly distinguish.
 - Define the versioned landmark-sequence contract: coordinate origin, scale, body-relative location, frame sampling/padding, missing landmarks, handedness, sequence length, and tracker version.
@@ -80,7 +83,7 @@ The next few results to build, each with what it should produce and how you will
 - Run the same preprocessing logic on a saved or live browser sequence and compare its shape, units, landmark order, and missing-value rules with offline output.
 - Confirm that no raw training video or extracted dataset landmark file is placed in the public app or committed unintentionally.
 
-**Pass evidence:** Vocabulary table with selection reasons and counts, preprocessing-contract version, sample tensor dimensions, signer-separated split counts, license/credit note, and inspection results. Stop and report if the practical download or source metadata cannot support this.
+**Pass evidence:** Validated five-sign catalog sample, vocabulary table with selection reasons and counts, preprocessing-contract version, sample tensor dimensions, signer-separated split counts, license/credit note, and inspection results. Stop and report if the practical download or source metadata cannot support this.
 
 ### Checkpoint 3 — First recognition baseline
 
@@ -117,6 +120,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - The synthetic video contained no hands, so it did not verify landmark alignment, handedness, two-hand tracking, or tracking recovery.
 - Initial frame counting processed duplicate camera frames. The loop was changed to ignore unchanged `video.currentTime` values. The earlier reported 60 FPS and approximate 12 ms hands-only / 20 ms hands-plus-pose timings are not accepted performance evidence.
 - Real-camera testing remains incomplete and belongs to Checkpoint 1 after Studio approval.
+
+### Nov 2 — PopSign catalog sample
+
+- Verified that the official `popsign_v1_0` archive route returns HTTP 200 while the equivalent `popsign_v2_1` route returns 404.
+- Verified train, validation, and test archive URLs for `after`, `hear`, `man`, `pen`, and `puppy`; no dataset archives were downloaded.
+- Added a formal JSON Schema, five metadata-only sample entries, and source/ID consistency checks. `npm run validate:catalog` reported: `Catalog valid: 5 signs, 1 source, schema v1.`
+- `npm run build` passed and copied the catalog unchanged into the production output.
+- These entries remain structural samples, not selected model vocabulary.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
