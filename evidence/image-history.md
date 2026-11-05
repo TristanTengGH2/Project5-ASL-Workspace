@@ -11,3 +11,13 @@ This file indexes visual revision evidence. Store original UI and performance sc
 - **Decision:** Approved by the Developer on Nov 4, 2026.
 - **Revision consequence:** Keep the latest-frame worker architecture. Continue treating rapid ASL motion capture as an open validation concern; do not hide latency with display smoothing.
 - **Related code:** Worker spike commit `590255b`; latency-diagnostics revision recorded with this entry.
+
+## 2026-11-04 — Full-frequency separate hand and pose comparison
+
+- **Image:** Original file pending import as `evidence/images/2026-11-04_full-frequency-hand-pose.png`.
+- **Source:** Developer-supplied screenshot from a real-camera test.
+- **Checkpoint:** Separate Hand Landmarker and Pose Landmarker running on every submitted frame in one worker.
+- **Observed:** 19 results/s; 47.2 ms combined inference; 30.7 ms hand inference; 16.5 ms pose inference; 66.4 ms frame-to-result average; 93.8 ms frame-to-result p95; 48.6 ms submit-to-result average; 0.7 ms bitmap-copy average; 490 skipped camera frames (42.0%); hand and pose both detected.
+- **Decision:** Rejected because it fell below 22 results/s and skipped substantially more frames than the hands-only baseline.
+- **Revision consequence:** Preserve hands-only performance as the comparison baseline and test one unified Holistic pipeline next.
+- **Related code:** Rejected experiment preserved in Git stash `full-frequency-separate-hand-pose-experiment`.

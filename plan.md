@@ -149,6 +149,13 @@ Record what you tested and what happened. For peer testing, note what people did
 - This approval accepts the responsive latest-frame architecture, not a claim that it captures all rapid ASL motion. That concern remains open for the PopSign preprocessing and recognition tests.
 - The Developer supplied a UI-only screenshot of the measurements in chat. Its original file is pending import into the repository image history; do not recreate or substitute it.
 
+### Nov 4 — Full-frequency separate hand and pose comparison
+
+- The separate hand and pose models both worked in the worker, and the real-camera test detected hands and pose.
+- The Developer reported 19 results/s, 47.2 ms combined inference, 30.7 ms hand inference, 16.5 ms pose inference, 66.4 ms average frame-to-result latency, 93.8 ms p95 frame-to-result latency, 48.6 ms submit-to-result time, 0.7 ms bitmap copy time, and 490 skipped camera frames (42.0%).
+- This approach is rejected because it fell below the approved 22-results/s floor and increased skipped frames from the hands-only baseline. The experiment is preserved in a named Git stash rather than retained as active application code.
+- The next approved comparison is MediaPipe Holistic Landmarker as one combined face, pose, and hand pipeline. If it also fails the performance floor, test multi-rate hand, body, and face tracking instead.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
