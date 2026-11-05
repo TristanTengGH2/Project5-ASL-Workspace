@@ -145,6 +145,9 @@ Record what you tested and what happened. For peer testing, note what people did
 - The Developer observed about 28 results per second and an inference display that reached about 18 ms. The joints still appeared to lag slightly behind the hands.
 - The worker architecture is provisionally accepted because it exceeded the 22-results-per-second target and avoided the earlier unresponsive-page behavior. It is not accepted as ASL-ready performance evidence.
 - Before pose or display smoothing, measure capture-to-result latency and dropped frames and test rapid finger, wrist, and two-hand movement. Do not use visual smoothing to conceal capture or processing delay.
+- The Developer approved the hands-only worker and latency-diagnostics checkpoint on Nov 4 after a rolling-window test reported 27 results/s, 29.3 ms average inference, 48.2 ms average frame-to-result latency, 76.0 ms p95 frame-to-result latency, 30.3 ms average submit-to-result time, 0.5 ms average bitmap copy time, and 359 skipped camera frames (23.2%).
+- This approval accepts the responsive latest-frame architecture, not a claim that it captures all rapid ASL motion. That concern remains open for the PopSign preprocessing and recognition tests.
+- The Developer supplied a UI-only screenshot of the measurements in chat. Its original file is pending import into the repository image history; do not recreate or substitute it.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 

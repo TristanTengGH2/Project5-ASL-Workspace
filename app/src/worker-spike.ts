@@ -22,16 +22,70 @@ const status = get("status");
 let worker: Worker | null = null;
 let stream: MediaStream | null = null;
 let animationId = 0;
+let videoCallbackId = 0;
 let busy = false;
 let nextId = 1;
 let lastVideoTime = -1;
-let recent: Array<{ time: number; ms: number }> = [];
+let latestVideoFrame: {
+  presentedFrames: number;
+  sourceTime: number;
+  hasCaptureTime: boolean;
+} | null = null;
+let lastSubmittedPresentedFrames: number | null = null;
+let skippedFrames = 0;
+let completedFrames = 0;
+let pendingTiming: {
+  id: number;
+  frameTime: number;
+  submittedAt: number;
+  bitmapReadyAt?: number;
+  hasCaptureTime: boolean;
+} | null = null;
+
+type TimingSample = {
+  time: number;
+  inferenceMs: number;
+  frameToResultMs: number;
+  submitToResultMs: number;
+  bitmapMs: number;
+};
+
+let samples: TimingSample[] = [];
 
 function setStatus(message: string): void {
   status.textContent = message;
 }
 
-function draw(result: HandResult): void {
+function average(values: number[]): number {
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function percentile(values: number[], fraction: number): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.max(0, Math.ceil(sorted.length * fraction) - 1)];
+}
+
+function showTiming(sample: TimingSample, hasCaptureTime: boolean): void {
+  samples.push(sample);
+  samples = samples.filter((item) => sample.time - item.time < 30_000);
+  const recentResults = samples.filter((item) => sample.time - item.time < 1000);
+  const frameTimes = samples.map((item) => item.frameToResultMs);
+  const consideredFrames = completedFrames + skippedFrames;
+  const skippedPercent = consideredFrames ? (skippedFrames / consideredFrames) * 100 : 0;
+
+  get("fps").textContent = String(recentResults.length);
+  get("latency").textContent = average(samples.map((item) => item.inferenceMs)).toFixed(1);
+  get("frame-latency").textContent = average(frameTimes).toFixed(1);
+  get("frame-p95").textContent = percentile(frameTimes, 0.95).toFixed(1);
+  get("round-trip").textContent = average(samples.map((item) => item.submitToResultMs)).toFixed(1);
+  get("bitmap-time").textContent = average(samples.map((item) => item.bitmapMs)).toFixed(1);
+  get("skipped").textContent = `${skippedFrames} (${skippedPercent.toFixed(1)}%)`;
+  get("timing-source").textContent = hasCaptureTime
+    ? "Rolling 30-second timing window; frame latency starts at the camera capture timestamp."
+    : "Rolling 30-second timing window; capture timestamp unavailable, so frame latency starts at browser receipt.";
+}
+
+function draw(result: HandResult, timing: TimingSample, hasCaptureTime: boolean): void {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -40,14 +94,20 @@ function draw(result: HandResult): void {
     drawing.drawLandmarks(landmarks, { color: "#e8756a", radius: 5 });
   }
 
-  const now = performance.now();
-  recent.push({ time: now, ms: result.ms });
-  recent = recent.filter((item) => now - item.time < 1000);
-  get("fps").textContent = String(recent.length);
-  get("latency").textContent = (recent.reduce((sum, item) => sum + item.ms, 0) / recent.length).toFixed(1);
+  showTiming(timing, hasCaptureTime);
   get("hands").textContent =
     result.handedness.map((hand) => `${hand.label} (${hand.score.toFixed(2)})`).join(", ") || "none";
   setStatus(result.landmarks.length ? "Hand tracking active." : "Worker active; no hands detected.");
+}
+
+function observeVideoFrame(now: number, metadata: VideoFrameCallbackMetadata): void {
+  const sourceTime = metadata.captureTime ?? metadata.receiveTime ?? now;
+  latestVideoFrame = {
+    presentedFrames: metadata.presentedFrames,
+    sourceTime,
+    hasCaptureTime: metadata.captureTime !== undefined,
+  };
+  if (stream) videoCallbackId = video.requestVideoFrameCallback(observeVideoFrame);
 }
 
 function loop(): void {
@@ -56,10 +116,33 @@ function loop(): void {
   busy = true;
   lastVideoTime = video.currentTime;
   const id = nextId++;
+  const submittedAt = performance.now();
+  const frame = latestVideoFrame;
+  if (frame && lastSubmittedPresentedFrames !== null) {
+    skippedFrames += Math.max(0, frame.presentedFrames - lastSubmittedPresentedFrames - 1);
+  }
+  if (frame) lastSubmittedPresentedFrames = frame.presentedFrames;
+  pendingTiming = {
+    id,
+    frameTime: frame?.sourceTime ?? submittedAt,
+    submittedAt,
+    hasCaptureTime: frame?.hasCaptureTime ?? false,
+  };
   void createImageBitmap(video)
-    .then((bitmap) => worker?.postMessage({ type: "track", id, bitmap, timestampMs: video.currentTime * 1000 }, [bitmap]))
+    .then((bitmap) => {
+      if (!worker || pendingTiming?.id !== id) {
+        bitmap.close();
+        busy = false;
+        return;
+      }
+      pendingTiming.bitmapReadyAt = performance.now();
+      // MediaPipe requires strictly increasing timestamps. Camera metadata is
+      // retained for latency measurement only because it may arrive a tick late.
+      worker.postMessage({ type: "track", id, bitmap, timestampMs: submittedAt }, [bitmap]);
+    })
     .catch((error: unknown) => {
       busy = false;
+      pendingTiming = null;
       setStatus(`Frame transfer failed: ${error instanceof Error ? error.message : String(error)}`);
     });
 }
@@ -81,10 +164,27 @@ async function start(): Promise<void> {
 
   worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
     if (event.data.type === "result") {
+      const receivedAt = performance.now();
+      const timing = pendingTiming?.id === event.data.id ? pendingTiming : null;
       busy = false;
-      draw(event.data.result);
+      pendingTiming = null;
+      completedFrames += 1;
+      const submittedAt = timing?.submittedAt ?? receivedAt;
+      const bitmapReadyAt = timing?.bitmapReadyAt ?? submittedAt;
+      draw(
+        event.data.result,
+        {
+          time: receivedAt,
+          inferenceMs: event.data.result.ms,
+          frameToResultMs: Math.max(0, receivedAt - (timing?.frameTime ?? submittedAt)),
+          submitToResultMs: Math.max(0, receivedAt - submittedAt),
+          bitmapMs: Math.max(0, bitmapReadyAt - submittedAt),
+        },
+        timing?.hasCaptureTime ?? false,
+      );
     } else if (event.data.type === "error") {
       busy = false;
+      pendingTiming = null;
       setStatus(`Worker failed: ${event.data.message}`);
     }
   };
@@ -95,18 +195,26 @@ async function start(): Promise<void> {
   toggle.disabled = false;
   toggle.textContent = "Stop test";
   setStatus("Worker active; waiting for a camera frame…");
+  videoCallbackId = video.requestVideoFrameCallback(observeVideoFrame);
   loop();
 }
 
 function stop(): void {
   cancelAnimationFrame(animationId);
+  if (videoCallbackId) video.cancelVideoFrameCallback(videoCallbackId);
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   video.srcObject = null;
   worker?.terminate();
   worker = null;
   busy = false;
-  recent = [];
+  videoCallbackId = 0;
+  latestVideoFrame = null;
+  lastSubmittedPresentedFrames = null;
+  skippedFrames = 0;
+  completedFrames = 0;
+  pendingTiming = null;
+  samples = [];
   context.clearRect(0, 0, canvas.width, canvas.height);
   toggle.textContent = "Start test";
   setStatus("Worker is off.");

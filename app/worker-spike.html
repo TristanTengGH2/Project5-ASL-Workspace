@@ -27,9 +27,15 @@
       <p id="status" role="status">Worker is off.</p>
       <dl>
         <div><dt>Results / s</dt><dd id="fps">–</dd></div>
-        <div><dt>Inference</dt><dd><span id="latency">–</span> ms</dd></div>
+        <div><dt>Inference avg</dt><dd><span id="latency">–</span> ms</dd></div>
+        <div><dt>Frame → result avg</dt><dd><span id="frame-latency">–</span> ms</dd></div>
+        <div><dt>Frame → result p95</dt><dd><span id="frame-p95">–</span> ms</dd></div>
+        <div><dt>Submit → result avg</dt><dd><span id="round-trip">–</span> ms</dd></div>
+        <div><dt>Bitmap copy avg</dt><dd><span id="bitmap-time">–</span> ms</dd></div>
+        <div><dt>Skipped camera frames</dt><dd id="skipped">–</dd></div>
         <div><dt>Hands</dt><dd id="hands">–</dd></div>
       </dl>
+      <p id="timing-source">Timing window: waiting for the camera.</p>
       <div class="stage">
         <video id="video" playsinline muted></video>
         <canvas id="canvas"></canvas>
