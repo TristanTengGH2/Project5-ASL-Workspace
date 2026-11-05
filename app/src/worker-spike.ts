@@ -21,17 +21,9 @@ const status = get("status");
 
 let worker: Worker | null = null;
 let stream: MediaStream | null = null;
-let animationId = 0;
 let videoCallbackId = 0;
 let busy = false;
 let nextId = 1;
-let lastVideoTime = -1;
-let latestVideoFrame: {
-  presentedFrames: number;
-  sourceTime: number;
-  hasCaptureTime: boolean;
-} | null = null;
-let lastSubmittedPresentedFrames: number | null = null;
 let skippedFrames = 0;
 let completedFrames = 0;
 let pendingTiming: {
@@ -100,33 +92,22 @@ function draw(result: HandResult, timing: TimingSample, hasCaptureTime: boolean)
   setStatus(result.landmarks.length ? "Hand tracking active." : "Worker active; no hands detected.");
 }
 
-function observeVideoFrame(now: number, metadata: VideoFrameCallbackMetadata): void {
-  const sourceTime = metadata.captureTime ?? metadata.receiveTime ?? now;
-  latestVideoFrame = {
-    presentedFrames: metadata.presentedFrames,
-    sourceTime,
-    hasCaptureTime: metadata.captureTime !== undefined,
-  };
-  if (stream) videoCallbackId = video.requestVideoFrameCallback(observeVideoFrame);
-}
+function processVideoFrame(now: number, metadata: VideoFrameCallbackMetadata): void {
+  if (stream) videoCallbackId = video.requestVideoFrameCallback(processVideoFrame);
+  if (!worker || video.readyState < 2) return;
+  if (busy) {
+    skippedFrames += 1;
+    return;
+  }
 
-function loop(): void {
-  animationId = requestAnimationFrame(loop);
-  if (!worker || busy || video.readyState < 2 || video.currentTime === lastVideoTime) return;
   busy = true;
-  lastVideoTime = video.currentTime;
   const id = nextId++;
   const submittedAt = performance.now();
-  const frame = latestVideoFrame;
-  if (frame && lastSubmittedPresentedFrames !== null) {
-    skippedFrames += Math.max(0, frame.presentedFrames - lastSubmittedPresentedFrames - 1);
-  }
-  if (frame) lastSubmittedPresentedFrames = frame.presentedFrames;
   pendingTiming = {
     id,
-    frameTime: frame?.sourceTime ?? submittedAt,
+    frameTime: metadata.captureTime ?? metadata.receiveTime ?? now,
     submittedAt,
-    hasCaptureTime: frame?.hasCaptureTime ?? false,
+    hasCaptureTime: metadata.captureTime !== undefined,
   };
   void createImageBitmap(video)
     .then((bitmap) => {
@@ -195,12 +176,10 @@ async function start(): Promise<void> {
   toggle.disabled = false;
   toggle.textContent = "Stop test";
   setStatus("Worker active; waiting for a camera frame…");
-  videoCallbackId = video.requestVideoFrameCallback(observeVideoFrame);
-  loop();
+  videoCallbackId = video.requestVideoFrameCallback(processVideoFrame);
 }
 
 function stop(): void {
-  cancelAnimationFrame(animationId);
   if (videoCallbackId) video.cancelVideoFrameCallback(videoCallbackId);
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
@@ -209,8 +188,6 @@ function stop(): void {
   worker = null;
   busy = false;
   videoCallbackId = 0;
-  latestVideoFrame = null;
-  lastSubmittedPresentedFrames = null;
   skippedFrames = 0;
   completedFrames = 0;
   pendingTiming = null;

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handshape · hands-only worker test</title>
+    <title>Handshape · direct camera-frame scheduling test</title>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; font: 16px system-ui, sans-serif; color: #fff; background: #0b1722; }
@@ -21,8 +21,8 @@
   </head>
   <body>
     <main>
-      <h1>Hands-only worker test</h1>
-      <p>This isolated page tests background hand tracking only. It does not run pose or recognize signs.</p>
+      <h1>Direct camera-frame scheduling test</h1>
+      <p>This hands-only comparison submits work directly when the browser presents a camera frame. It does not run pose, smooth landmarks, or recognize signs.</p>
       <button id="toggle" type="button">Start test</button>
       <p id="status" role="status">Worker is off.</p>
       <dl>

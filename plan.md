@@ -172,6 +172,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - The timing breakdown showed approximately 1.7 ms between combined inference and submit-to-result time, but approximately 18.7 ms between submit-to-result and frame-to-result time. The next approved test restores hands-only inference and submits work directly from the browser's camera-frame callback instead of waiting for an animation frame.
 - Body anchors should later update outside the critical hand path, such as while signing is idle or at a separately tested low rate. Display prediction must remain separate from raw recognition data.
 
+### Nov 4 — Direct camera-frame scheduling
+
+- The hands-only worker submitted frames directly from `requestVideoFrameCallback` instead of waiting for an animation-frame loop.
+- The Developer reported 19 results/s, 32.1 ms average inference, 43.8 ms average frame-to-result latency, 61.2 ms p95 frame-to-result latency, 33.2 ms submit-to-result time, 0.6 ms bitmap copy time, and 527 skipped camera frames (29.0%).
+- Compared with the earlier hands-only reading, average frame-to-result latency improved from 48.2 ms to 43.8 ms and p95 improved from 76.0 ms to 61.2 ms. The Developer said the result felt substantially better, although the overlay still trailed slightly during large side-to-side hand movements.
+- The Developer accepted this as good enough to proceed and chose not to continue CPU-delegate, lower-resolution, or display-prediction experiments now. This acceptance supersedes using more than 22 results/s as a strict gate for the current tracking spike; the 19 results/s reading and remaining lag stay visible in the evidence.
+- This is a Phase 2 feasibility baseline, not proof that rapid ASL motion is preserved. That question remains part of PopSign preprocessing and held-out recognition evaluation.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
