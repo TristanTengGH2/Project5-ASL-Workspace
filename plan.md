@@ -138,6 +138,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - Performance changes will be tested and accepted one feature at a time: off-main-thread tracking first, reduced pose cadence only if separately approved, and display-only smoothing only if separately approved.
 - Recognition training must come from sourced PopSign videos rather than recordings of the Developer. Developer webcam input is reserved for later inference and testing.
 
+### Nov 4 — Hands-only worker spike
+
+- An isolated worker page loaded the hand model and WASM runtime in both Vite development and production preview, processed synthetic camera frames without browser errors, and released the camera on Stop.
+- In the Developer's real-camera test, all hand joints followed the hands, the page and Stop control remained responsive, and the camera indicator turned off after stopping.
+- The Developer observed about 28 results per second and an inference display that reached about 18 ms. The joints still appeared to lag slightly behind the hands.
+- The worker architecture is provisionally accepted because it exceeded the 22-results-per-second target and avoided the earlier unresponsive-page behavior. It is not accepted as ASL-ready performance evidence.
+- Before pose or display smoothing, measure capture-to-result latency and dropped frames and test rapid finger, wrist, and two-hand movement. Do not use visual smoothing to conceal capture or processing delay.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

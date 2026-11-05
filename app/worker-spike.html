@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Handshape · hands-only worker test</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font: 16px system-ui, sans-serif; color: #fff; background: #0b1722; }
+      main { width: min(920px, 100%); margin: auto; padding: 1rem; }
+      h1 { margin: 0 0 0.4rem; font-size: 1.35rem; }
+      p { color: #c8d2dc; }
+      button { padding: 0.65rem 1rem; font: inherit; border: 2px solid #fff; border-radius: 999px; color: #fff; background: #152c42; }
+      .stage { position: relative; width: 100%; margin-top: 1rem; aspect-ratio: 16 / 9; overflow: hidden; background: #050b11; }
+      video, canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+      dl { display: flex; flex-wrap: wrap; gap: 1rem; }
+      dl div { display: flex; gap: 0.4rem; }
+      dt { color: #aebdca; }
+      dd { margin: 0; font-variant-numeric: tabular-nums; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Hands-only worker test</h1>
+      <p>This isolated page tests background hand tracking only. It does not run pose or recognize signs.</p>
+      <button id="toggle" type="button">Start test</button>
+      <p id="status" role="status">Worker is off.</p>
+      <dl>
+        <div><dt>Results / s</dt><dd id="fps">–</dd></div>
+        <div><dt>Inference</dt><dd><span id="latency">–</span> ms</dd></div>
+        <div><dt>Hands</dt><dd id="hands">–</dd></div>
+      </dl>
+      <div class="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="canvas"></canvas>
+      </div>
+    </main>
+    <script type="module" src="/src/worker-spike.ts"></script>
+  </body>
+</html>
