@@ -21,3 +21,13 @@ This file indexes visual revision evidence. Store original UI and performance sc
 - **Decision:** Rejected because it fell below 22 results/s and skipped substantially more frames than the hands-only baseline.
 - **Revision consequence:** Preserve hands-only performance as the comparison baseline and test one unified Holistic pipeline next.
 - **Related code:** Rejected experiment preserved in Git stash `full-frequency-separate-hand-pose-experiment`.
+
+## 2026-11-04 — Holistic Landmarker comparison
+
+- **Image:** Original file pending import as `evidence/images/2026-11-04_holistic-worker.png`.
+- **Source:** Developer-supplied screenshot from a real-camera test.
+- **Checkpoint:** One Holistic Landmarker pipeline returning hand, pose, and face landmarks on every processed frame.
+- **Observed:** 11 results/s; 100.5 ms inference average; 119.1 ms frame-to-result average; 129.9 ms frame-to-result p95; 101.8 ms submit-to-result average; 0.6 ms bitmap-copy average; 524 skipped camera frames (59.9%); hand, pose, and face detected.
+- **Decision:** Rejected because responsiveness and temporal hand coverage were substantially worse than the approved hands-only baseline.
+- **Revision consequence:** Test hands at full processed-frame cadence with pose on one of every three processed frames. Defer face cadence until that comparison is decided.
+- **Related code:** Rejected experiment preserved in Git stash `full-rate-holistic-worker-experiment`.

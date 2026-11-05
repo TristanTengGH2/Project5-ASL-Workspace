@@ -156,6 +156,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - This approach is rejected because it fell below the approved 22-results/s floor and increased skipped frames from the hands-only baseline. The experiment is preserved in a named Git stash rather than retained as active application code.
 - The next approved comparison is MediaPipe Holistic Landmarker as one combined face, pose, and hand pipeline. If it also fails the performance floor, test multi-rate hand, body, and face tracking instead.
 
+### Nov 4 — Holistic Landmarker comparison
+
+- Holistic Landmarker successfully detected the Developer's hand, pose, and face in one worker pipeline.
+- The Developer reported 11 results/s, 100.5 ms average inference, 119.1 ms average frame-to-result latency, 129.9 ms p95 frame-to-result latency, 101.8 ms submit-to-result time, 0.6 ms bitmap copy time, and 524 skipped camera frames (59.9%).
+- Full-rate Holistic is rejected because it was substantially slower than both the hands-only baseline and the separate hand-plus-pose comparison.
+- The Developer prioritized responsiveness over collecting every available landmark on every frame. The next approved test keeps hands on every processed frame, runs pose once every three processed frames, and reuses the latest pose landmarks between updates.
+- Face tracking remains a separate later comparison after the one-in-three pose cadence is evaluated. A post-capture keyframe analysis path approaches Phase 3 and must not be integrated without a new checkpoint approval.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
