@@ -31,3 +31,13 @@ This file indexes visual revision evidence. Store original UI and performance sc
 - **Decision:** Rejected because responsiveness and temporal hand coverage were substantially worse than the approved hands-only baseline.
 - **Revision consequence:** Test hands at full processed-frame cadence with pose on one of every three processed frames. Defer face cadence until that comparison is decided.
 - **Related code:** Rejected experiment preserved in Git stash `full-rate-holistic-worker-experiment`.
+
+## 2026-11-04 — One-in-three pose comparison
+
+- **Image:** Original file pending import as `evidence/images/2026-11-04_one-in-three-pose.png`.
+- **Source:** Developer-supplied screenshot from a real-camera test.
+- **Checkpoint:** Hand Landmarker on every processed frame with Pose Landmarker on one of every three processed frames in the same worker.
+- **Observed:** 20 results/s; 43.9 ms combined inference; 34.4 ms hand inference; 28.3 ms pose inference; 7 pose updates/s; 64.3 ms frame-to-result average; 88.8 ms frame-to-result p95; 45.6 ms submit-to-result average; 0.8 ms bitmap-copy average; 272 skipped camera frames (32.6%); hand and pose detected.
+- **Decision:** Rejected because it remained below 22 results/s and the Developer still observed visible hand lag.
+- **Revision consequence:** Restore hands-only inference and test direct scheduling from camera-frame callbacks. Keep body-anchor work outside the critical hand path.
+- **Related code:** Rejected experiment preserved in Git stash `one-in-three-pose-worker-experiment`.

@@ -164,6 +164,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - The Developer prioritized responsiveness over collecting every available landmark on every frame. The next approved test keeps hands on every processed frame, runs pose once every three processed frames, and reuses the latest pose landmarks between updates.
 - Face tracking remains a separate later comparison after the one-in-three pose cadence is evaluated. A post-capture keyframe analysis path approaches Phase 3 and must not be integrated without a new checkpoint approval.
 
+### Nov 4 — One-in-three pose comparison
+
+- Hands ran on every processed frame while pose ran once every three processed frames and its latest landmarks were reused between updates.
+- The Developer reported 20 results/s, 43.9 ms combined inference, 34.4 ms hand inference, 28.3 ms pose inference, 7 pose updates/s, 64.3 ms average frame-to-result latency, 88.8 ms p95 frame-to-result latency, 45.6 ms submit-to-result time, 0.8 ms bitmap copy time, and 272 skipped camera frames (32.6%).
+- The Developer still observed visible hand lag. This same-worker cadence is rejected because it remained below the 22-results/s floor and pose work continued delaying hand results.
+- The timing breakdown showed approximately 1.7 ms between combined inference and submit-to-result time, but approximately 18.7 ms between submit-to-result and frame-to-result time. The next approved test restores hands-only inference and submits work directly from the browser's camera-frame callback instead of waiting for an animation frame.
+- Body anchors should later update outside the critical hand path, such as while signing is idle or at a separately tested low rate. Display prediction must remain separate from raw recognition data.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
