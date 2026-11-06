@@ -63,6 +63,8 @@ The next few results to build, each with what it should produce and how you will
 
 ### Checkpoint 2 — Dataset and preprocessing feasibility
 
+**Approved implementation scope (Nov 5):** Finalize landmark contract v1, use the existing five catalog signs for the first extraction test, download only selected PopSign members into ignored local storage, inspect skeleton overlays, confirm official signer-separated splits, and then select the 20–30-sign candidate vocabulary. Offline recognition remains Phase 2; browser capture and prediction remain Phase 3.
+
 **Produce:**
 
 - Confirm the PopSign download method, file organization, metadata, and attribution requirements without downloading the entire 1.1 TB dataset by default.
@@ -179,6 +181,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - Compared with the earlier hands-only reading, average frame-to-result latency improved from 48.2 ms to 43.8 ms and p95 improved from 76.0 ms to 61.2 ms. The Developer said the result felt substantially better, although the overlay still trailed slightly during large side-to-side hand movements.
 - The Developer accepted this as good enough to proceed and chose not to continue CPU-delegate, lower-resolution, or display-prediction experiments now. This acceptance supersedes using more than 22 results/s as a strict gate for the current tracking spike; the 19 results/s reading and remaining lag stay visible in the evidence.
 - This is a Phase 2 feasibility baseline, not proof that rapid ASL motion is preserved. That question remains part of PopSign preprocessing and held-out recognition evaluation.
+
+### Nov 5–6 — Landmark extraction and preliminary recognition smoke test
+
+- Landmark contract v1 defines two 68-feature hand slots plus 13 compact body anchors, producing a `64 x 188` tensor with explicit missing values. Mouth corners were added to the named body anchors; full facial-expression features remain outside v1.
+- A byte-range downloader retrieved selected MP4 members from the multi-gigabyte uncompressed PopSign archives without downloading whole archives. All source videos, extracted tensors, overlays, and model artifacts stayed in Git-ignored directories.
+- Three distinct-signer `after` train clips decoded successfully. Hand detection covered 100%, 41%, and 62% of frames, while selected pose anchors were usable in 100%. Local overlay inspection showed aligned hand and body landmarks; source images were not committed because they contain identifiable participants.
+- The bounded five-sign sample download failed twice due to the external source server: a read timeout, then DNS failure. Per the working rule, repeated download attempts stopped. Nineteen completed clips remain locally: `after` 5 train/3 validation/3 test and `hear` 5 train/3 validation.
+- A preliminary two-class held-out validation smoke test gave 4/6 top-1 (`66.7%`) for both one-nearest-neighbor and class-centroid baselines. The confusion patterns differed, and synthetic idle/degraded inputs were forced into a class because rejection is not implemented. No model was exported.
+- **Phase 2 remains open.** Required exit evidence still missing: five-sign extraction across all official splits, the completed 20–30-sign count/review table, a meaningful held-out-signer baseline with confusion and negative examples, and an export decision. Browser capture or prediction work must not begin yet.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 

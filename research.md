@@ -26,6 +26,15 @@ Record what informs your build decisions: the questions you investigated, useful
 - These five entries test the catalog structure only. They are not yet the approved model vocabulary and have not been assessed for visual distinction, variation, or suitability.
 - Decision: build an open-source Handshape metadata catalog that references PopSign with stable IDs and provenance. Do not copy dataset media or represent the catalog as an authoritative ASL dictionary.
 
+### Nov 5–6 — PopSign preprocessing feasibility
+
+- The official PopSign v1.0 data card reports 250 one-handed smartphone signs, 47 signers, and 1.1 TB of identifiable video. The paper reports official signer-separated splits of 31 train, eight validation, and eight test signers. It also documents a hand-landmark LSTM baseline, left-dominant normalization, and a 60-frame input. Sources: [official data card](https://signdata.cc.gatech.edu/view/datasets/popsign_v1_0/index.html) and [NeurIPS 2023 paper](https://proceedings.neurips.cc/paper_files/paper/2023/file/00dada608b8db212ea7d9d92b24c68de-Paper-Datasets_and_Benchmarks.pdf).
+- The `after` archives were measured at approximately 2.10 GB train, 0.76 GB validation, and 0.56 GB test. Downloading whole archives for an early feasibility run was rejected as wasteful. The uncompressed tar server supports byte ranges, so the project downloader indexes headers and retrieves selected MP4 members into Git-ignored storage.
+- Three train clips from distinct filename signer prefixes produced `64 x 188` contract-v1 tensors. Hand detection covered 100%, 41%, and 62% of decoded frames; compact body anchors were available in 100% of frames. Local, ignored overlay images showed hand and body joints aligned with representative source frames. Missing hand detections during blur must remain explicit model input rather than being silently interpolated or filtered away.
+- A bounded five-sign download stopped after two external failures: first a source-server read timeout and then DNS resolution failure. Nineteen clips were retained: `after` had 5 train/3 validation/3 test examples, and `hear` had 5 train/3 validation examples.
+- A preliminary two-class held-out validation smoke test used five train clips and three validation clips per class. One-nearest-neighbor and class-centroid baselines each reached 4/6 top-1 (`66.7%`) but produced different confusion patterns. Synthetic idle and degraded inputs were always assigned a known class because no rejection threshold exists. This is not an integration-ready model and does not satisfy the five-sign recognition gate.
+- Decision: keep landmark contract v1 and the range-based sample tooling. Do not export the two-class model. Resume the five-sign, signer-separated evaluation only after the official archive server is reachable; then revise or reduce the provisional 25-sign list in `training/vocabulary-candidates.md` using counts, overlay inspection, and confusion evidence.
+
 ## Scope
 
 ### Stretch goals

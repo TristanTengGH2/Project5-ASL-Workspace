@@ -1,0 +1,103 @@
+{
+  "contractVersion": 1,
+  "tracker": {
+    "family": "MediaPipe Tasks Vision",
+    "handModel": "hand_landmarker.task",
+    "poseModel": "pose_landmarker_lite.task",
+    "modelHashesRequiredForTrainingRun": true
+  },
+  "coordinates": {
+    "sourceOrigin": "top-left",
+    "xDirection": "right",
+    "yDirection": "down",
+    "zConvention": "MediaPipe normalized landmark z",
+    "mirrorPolicy": "Store anatomical handedness after a source-specific mirror correction; never infer a correction silently."
+  },
+  "hands": {
+    "slots": ["left", "right"],
+    "landmarkOrder": [
+      "wrist",
+      "thumb CMC",
+      "thumb MCP",
+      "thumb IP",
+      "thumb tip",
+      "index MCP",
+      "index PIP",
+      "index DIP",
+      "index tip",
+      "middle MCP",
+      "middle PIP",
+      "middle DIP",
+      "middle tip",
+      "ring MCP",
+      "ring PIP",
+      "ring DIP",
+      "ring tip",
+      "pinky MCP",
+      "pinky PIP",
+      "pinky DIP",
+      "pinky tip"
+    ],
+    "shapeNormalization": {
+      "origin": "wrist",
+      "scale": "mean 3D distance from wrist to index MCP, middle MCP, and pinky MCP",
+      "rotation": "none; preserve palm and finger orientation"
+    },
+    "featuresPerSlot": {
+      "localLandmarksXyz": 63,
+      "bodyRelativeWristXyz": 3,
+      "present": 1,
+      "handednessConfidence": 1,
+      "total": 68
+    }
+  },
+  "body": {
+    "anchorOrder": [
+      { "index": 0, "name": "nose" },
+      { "index": 2, "name": "left eye" },
+      { "index": 5, "name": "right eye" },
+      { "index": 7, "name": "left ear" },
+      { "index": 8, "name": "right ear" },
+      { "index": 9, "name": "left mouth corner" },
+      { "index": 10, "name": "right mouth corner" },
+      { "index": 11, "name": "left shoulder" },
+      { "index": 12, "name": "right shoulder" },
+      { "index": 13, "name": "left elbow" },
+      { "index": 14, "name": "right elbow" },
+      { "index": 23, "name": "left hip", "optional": true },
+      { "index": 24, "name": "right hip", "optional": true }
+    ],
+    "normalization": {
+      "origin": "shoulder midpoint",
+      "scale": "3D shoulder width",
+      "fallback": "Body-relative features are missing when both shoulders are not reliable; do not substitute an unverified scale."
+    },
+    "featuresPerAnchor": ["x", "y", "z", "visibility"],
+    "derivedRegions": [
+      "forehead",
+      "side of face",
+      "mouth or chin",
+      "neck",
+      "left shoulder",
+      "right shoulder",
+      "chest",
+      "left elbow or forearm",
+      "right elbow or forearm",
+      "neutral signing space"
+    ]
+  },
+  "sequence": {
+    "raw": "Keep increasing source timestamps and all successfully decoded frames before normalization.",
+    "normalizedFrameCount": 64,
+    "resampling": "Nearest decoded source frame by timestamp across the reviewed sign interval; do not interpolate across missing detections.",
+    "missingValues": "Use zero coordinates only together with an explicit zero presence or visibility value; never treat zero as observed data.",
+    "frameFeatureCount": 188,
+    "frameFeatureLayout": "left hand 68, right hand 68, then 13 body anchors x 4",
+    "tensorShape": [64, 188]
+  },
+  "requirements": {
+    "handChannels": "Required for every supported sign.",
+    "bodyChannels": "Required only when catalog metadata says body-relative location is discriminative.",
+    "faceExpressionChannels": "Not included in v1; signs requiring non-manual facial distinctions must be excluded or explicitly marked unsupported."
+  }
+}

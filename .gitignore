@@ -1,3 +1,4 @@
 # Downloaded datasets and derived training outputs stay local.
 /datasets/
 /training-artifacts/
+/.venv/

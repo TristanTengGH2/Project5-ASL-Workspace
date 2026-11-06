@@ -29,6 +29,8 @@ export const POSE_ANCHOR_NAMES = new Map<number, string>([
   [5, "right eye"],
   [7, "left ear"],
   [8, "right ear"],
+  [9, "left mouth corner"],
+  [10, "right mouth corner"],
   [11, "left shoulder"],
   [12, "right shoulder"],
   [13, "left elbow"],
