@@ -14,7 +14,13 @@
     "mirrorPolicy": "Store anatomical handedness after a source-specific mirror correction; never infer a correction silently."
   },
   "hands": {
-    "slots": ["left", "right"],
+    "slots": ["dominant", "non-dominant"],
+    "dominanceNormalization": {
+      "selection": "The detected hand present in the most decoded frames is dominant; ties keep the right hand as dominant.",
+      "canonicalSide": "right",
+      "leftDominantRule": "Reflect x coordinates, exchange paired left/right body anchors, and place the detected left hand in the dominant slot.",
+      "reason": "Do not make left-handed signing a separate class; match the source dataset's published handedness normalization."
+    },
     "landmarkOrder": [
       "wrist",
       "thumb CMC",
@@ -92,7 +98,7 @@
     "resampling": "Nearest decoded source frame by timestamp across the reviewed sign interval; do not interpolate across missing detections.",
     "missingValues": "Use zero coordinates only together with an explicit zero presence or visibility value; never treat zero as observed data.",
     "frameFeatureCount": 188,
-    "frameFeatureLayout": "left hand 68, right hand 68, then 13 body anchors x 4",
+    "frameFeatureLayout": "dominant hand 68, non-dominant hand 68, then 13 body anchors x 4 in canonical right-dominant coordinates",
     "tensorShape": [64, 188]
   },
   "requirements": {

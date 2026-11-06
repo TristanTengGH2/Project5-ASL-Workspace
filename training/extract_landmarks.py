@@ -161,6 +161,37 @@ def nearest_resample(frames: list[ExtractedFrame], count: int) -> tuple[np.ndarr
     return tensor, indexes.astype(np.int32)
 
 
+def mirror_hand_block(block: np.ndarray) -> np.ndarray:
+    mirrored = block.copy()
+    mirrored[:63].reshape(21, 3)[:, 0] *= -1
+    mirrored[63] *= -1
+    return mirrored
+
+
+def canonicalize_dominance(frames: list[ExtractedFrame]) -> tuple[str, bool]:
+    left_count = sum(frame.features[66] > 0 for frame in frames)
+    right_count = sum(frame.features[68 + 66] > 0 for frame in frames)
+    dominant = "left" if left_count > right_count else "right"
+    body_pairs = ((1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12))
+    for frame in frames:
+        left = frame.features[:68].copy()
+        right = frame.features[68:136].copy()
+        body = frame.features[136:].reshape(13, 4).copy()
+        if dominant == "left":
+            dominant_hand = mirror_hand_block(left)
+            non_dominant_hand = mirror_hand_block(right)
+            body[:, 0] *= -1
+            for left_index, right_index in body_pairs:
+                body[[left_index, right_index]] = body[[right_index, left_index]]
+        else:
+            dominant_hand = right
+            non_dominant_hand = left
+        frame.features = np.concatenate(
+            [dominant_hand, non_dominant_hand, body.reshape(-1)]
+        ).astype(np.float32)
+    return dominant, dominant == "left"
+
+
 def extract_video(
     video_path: Path,
     hand_landmarker: object,
@@ -223,6 +254,7 @@ def extract_video(
     if not frames:
         raise RuntimeError(f"No decoded frames in {video_path}")
 
+    dominant_hand, dominance_mirrored = canonicalize_dominance(frames)
     tensor, selected_indexes = nearest_resample(frames, contract["sequence"]["normalizedFrameCount"])
     stem = video_path.stem
     tensor_dir = output_root / "tensors"
@@ -260,6 +292,8 @@ def extract_video(
         "handDetectionRate": hand_frames / len(frames),
         "bodyAnchorFrames": body_frames,
         "bodyAnchorRate": body_frames / len(frames),
+        "detectedDominantHand": dominant_hand,
+        "dominanceMirrored": dominance_mirrored,
         "tensor": str(tensor_path),
         "tensorShape": list(tensor.shape),
         "inspectionFrames": inspection_indexes,
@@ -285,6 +319,9 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--handedness-mode", choices=("keep", "swap"), required=True)
     parser.add_argument("--maximum-side", type=int, default=960)
+    parser.add_argument("--hand-detection-confidence", type=float, default=0.4)
+    parser.add_argument("--hand-presence-confidence", type=float, default=0.4)
+    parser.add_argument("--hand-tracking-confidence", type=float, default=0.4)
     args = parser.parse_args()
     videos = videos_from_inputs(args.inputs)
     if not videos:
@@ -299,9 +336,9 @@ def main() -> int:
         base_options=mp.tasks.BaseOptions(model_asset_path=str(HAND_MODEL)),
         running_mode=vision.RunningMode.VIDEO,
         num_hands=2,
-        min_hand_detection_confidence=0.4,
-        min_hand_presence_confidence=0.4,
-        min_tracking_confidence=0.4,
+        min_hand_detection_confidence=args.hand_detection_confidence,
+        min_hand_presence_confidence=args.hand_presence_confidence,
+        min_tracking_confidence=args.hand_tracking_confidence,
     )
     pose_options = vision.PoseLandmarkerOptions(
         base_options=mp.tasks.BaseOptions(model_asset_path=str(POSE_MODEL)),
@@ -335,6 +372,11 @@ def main() -> int:
         "poseModelSha256": sha256(POSE_MODEL),
         "handednessMode": args.handedness_mode,
         "maximumTrackingSide": args.maximum_side,
+        "handConfidenceThresholds": {
+            "detection": args.hand_detection_confidence,
+            "presence": args.hand_presence_confidence,
+            "tracking": args.hand_tracking_confidence,
+        },
         "videos": reports,
     }
     args.output.mkdir(parents=True, exist_ok=True)

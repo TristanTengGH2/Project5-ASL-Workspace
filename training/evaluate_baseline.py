@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import sys
 from collections import Counter
@@ -101,6 +102,41 @@ def evaluate(name: str, validation: list[dict], ranker) -> dict:
     }
 
 
+def restricted_accuracy(rows: list[dict], labels: tuple[str, ...]) -> dict:
+    eligible = [row for row in rows if row["expected"] in labels]
+    correct = sum(
+        min(labels, key=lambda label: row["classDistances"][label]) == row["expected"]
+        for row in eligible
+    )
+    return {"correct": correct, "examples": len(eligible), "accuracy": correct / len(eligible)}
+
+
+def vocabulary_reduction(evaluations: dict, labels: list[str]) -> dict:
+    results = {}
+    for method_index, method_name in enumerate(("one-nearest-neighbor", "class-centroid")):
+        validation_rows = evaluations["val"][method_index]["predictions"]
+        test_rows = evaluations["test"][method_index]["predictions"]
+        method_results = []
+        for size in range(2, len(labels)):
+            candidates = []
+            for subset in itertools.combinations(labels, size):
+                candidates.append((restricted_accuracy(validation_rows, subset), subset))
+            validation_result, selected = max(
+                candidates,
+                key=lambda item: (item[0]["accuracy"], item[0]["correct"], item[1]),
+            )
+            method_results.append(
+                {
+                    "size": size,
+                    "selectedUsingValidationOnly": list(selected),
+                    "validation": validation_result,
+                    "test": restricted_accuracy(test_rows, selected),
+                }
+            )
+        results[method_name] = method_results
+    return results
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
@@ -109,33 +145,42 @@ def main() -> int:
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     examples = load_examples(manifest)
     train_examples = [item for item in examples if item["split"] == "train"]
-    validation_examples = [item for item in examples if item["split"] == "val"]
+    evaluation_examples = {
+        split: [item for item in examples if item["split"] == split]
+        for split in ("val", "test")
+    }
     labels = sorted({item["label"] for item in train_examples})
     if len(labels) < 2:
         raise RuntimeError("At least two training labels are required")
-    if set(labels) != {item["label"] for item in validation_examples}:
-        raise RuntimeError("Training and validation labels do not match")
+    for split, split_examples in evaluation_examples.items():
+        if set(labels) != {item["label"] for item in split_examples}:
+            raise RuntimeError(f"Training and {split} labels do not match")
 
     train = np.stack([item["features"] for item in train_examples])
     mean, scale = standardizer(train)
     train = (train - mean) / scale
-    for item in validation_examples:
-        item["features"] = (item["features"] - mean) / scale
+    for split_examples in evaluation_examples.values():
+        for item in split_examples:
+            item["features"] = (item["features"] - mean) / scale
     train_labels = [item["label"] for item in train_examples]
     centroids = {
         label: train[np.array(train_labels) == label].mean(axis=0) for label in labels
     }
 
-    nearest = evaluate(
-        "one-nearest-neighbor",
-        validation_examples,
-        lambda query: ranked_labels_nearest(query, train, train_labels, labels),
-    )
-    centroid = evaluate(
-        "class-centroid",
-        validation_examples,
-        lambda query: ranked_labels_centroid(query, centroids, labels),
-    )
+    evaluations = {}
+    for split, split_examples in evaluation_examples.items():
+        evaluations[split] = [
+            evaluate(
+                "one-nearest-neighbor",
+                split_examples,
+                lambda query: ranked_labels_nearest(query, train, train_labels, labels),
+            ),
+            evaluate(
+                "class-centroid",
+                split_examples,
+                lambda query: ranked_labels_centroid(query, centroids, labels),
+            ),
+        ]
 
     encoded_missing_frame = (np.zeros_like(mean) - mean) / scale
     synthetic_inputs = {
@@ -156,15 +201,16 @@ def main() -> int:
         }
 
     report = {
-        "status": "preliminary-two-class-smoke-test",
-        "warning": "Two classes and five training examples per class cannot establish usable ASL recognition accuracy.",
+        "status": "small-sample-feasibility-baseline",
+        "warning": f"{len(labels)} classes and {len(train_examples)} total training examples cannot establish production ASL recognition accuracy.",
         "contractVersion": manifest["contractVersion"],
         "tensorShape": list(train.shape[1:]),
         "splitCounts": {
             split: dict(Counter(item["label"] for item in examples if item["split"] == split))
             for split in ("train", "val", "test")
         },
-        "evaluations": [nearest, centroid],
+        "evaluations": evaluations,
+        "vocabularyReduction": vocabulary_reduction(evaluations, labels),
         "syntheticNegativeBehavior": synthetic_results,
         "export": {
             "attempted": False,
@@ -184,9 +230,18 @@ def main() -> int:
     )
     print(f"Train: {report['splitCounts']['train']}")
     print(f"Validation: {report['splitCounts']['val']}")
-    for result in report["evaluations"]:
-        print(f"{result['name']}: top-1 {result['top1Accuracy']:.1%} ({result['examples']} examples)")
-        print(f"  confusion: {result['confusion']}")
+    for split, split_evaluations in report["evaluations"].items():
+        print(f"{split.title()}:")
+        for result in split_evaluations:
+            print(f"  {result['name']}: top-1 {result['top1Accuracy']:.1%} ({result['examples']} examples)")
+            print(f"    confusion: {result['confusion']}")
+    for method, reductions in report["vocabularyReduction"].items():
+        best_pair = reductions[0]
+        print(
+            f"{method} validation-selected pair {best_pair['selectedUsingValidationOnly']}: "
+            f"val {best_pair['validation']['accuracy']:.1%}, "
+            f"test {best_pair['test']['accuracy']:.1%}"
+        )
     print("Synthetic negatives: not rejected (no threshold fitted)")
     print(f"Report: {report_path}")
     print(f"Model: {model_path} ({model_path.stat().st_size / 1000:.1f} kB)")

@@ -10,13 +10,19 @@ and evaluation outputs belong in the root `datasets/` and
 `landmark-contract.v1.json` is the shared input contract for offline training
 and later browser inference. Version 1 produces a `64 x 188` sequence:
 
-- 68 features for each anatomical hand;
+- 68 features for dominant and non-dominant hand slots;
 - 13 compact body anchors with `x`, `y`, `z`, and visibility;
 - explicit presence values so missing landmarks are not confused with zeros.
 
 The contract preserves hand orientation and broad body-relative location. It
 does not yet represent eyebrow, eyelid, or mouth-expression features, so signs
 that depend on those distinctions are outside the first model vocabulary.
+Left-dominant sequences are reflected into canonical right-dominant coordinates,
+including paired body anchors, so handedness is not learned as a sign class.
+The exact confidence thresholds and model hashes are written into each
+extraction manifest. A comparison with the PopSign paper's 0.5 detection and
+0.1 tracking settings reduced average hand coverage in the three difficult
+`after` validation clips, so the tested 0.4 defaults remain in use.
 
 ## Small PopSign downloads
 
@@ -77,6 +83,8 @@ MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/evaluate_baseline.py
 ```
 
 It compares one-nearest-neighbor and class-centroid sequence distances on the
-official validation split. Synthetic missing-tracking inputs document behavior
-before unknown-sign rejection exists. A two-class or otherwise incomplete run
-must remain labeled as a smoke test and must not be exported to the browser.
+official validation and test splits. Any vocabulary reduction is selected using
+validation only and then reported once on test. Synthetic missing-tracking
+inputs document behavior before unknown-sign rejection exists. A two-class or
+otherwise incomplete run must remain labeled as a smoke test and must not be
+exported to the browser.

@@ -191,6 +191,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - A preliminary two-class held-out validation smoke test gave 4/6 top-1 (`66.7%`) for both one-nearest-neighbor and class-centroid baselines. The confusion patterns differed, and synthetic idle/degraded inputs were forced into a class because rejection is not implemented. No model was exported.
 - **Phase 2 remains open.** Required exit evidence still missing: five-sign extraction across all official splits, the completed 20–30-sign count/review table, a meaningful held-out-signer baseline with confusion and negative examples, and an export decision. Browser capture or prediction work must not begin yet.
 
+### Nov 6 — Completed five-sign evaluation and decision gate
+
+- The PopSign server recovered. The bounded sample now contains 55 videos (301.5 MB): five train, three validation, and three test clips for each of the five catalog signs. All media and derived artifacts remain Git-ignored.
+- All clips produced `64 x 188` tensors. Body anchors were available throughout; hand coverage ranged from 12.2% to 100%, exposing genuine blur/tracking failures. A 755-frame, 14%-coverage `pen` training outlier was retained for the first run.
+- Contract v1 now uses dominant/non-dominant hand slots and mirrors left-dominant sequences plus paired body anchors into canonical right-dominant coordinates. This prevents handedness from becoming a class feature.
+- Five-sign validation top-1 was 20.0% nearest-neighbor and 33.3% centroid; test top-1 was 33.3% and 20.0%. Synthetic negative inputs were still forced into a class. A published-threshold tracking comparison did not improve the difficult `after` clips.
+- Validation-only reduction found `hear`/`puppy` as the strongest nearest-neighbor pair at 5/6 validation and 5/6 test. This is too narrow and too small to justify browser integration or a supported-vocabulary claim.
+- **Developer decision gate:** set the minimum feasibility target and choose between (a) expanding the local sample and testing one small temporal model, or (b) accepting a deliberately tiny proof vocabulary. Do not enter Phase 3 until this choice is approved.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

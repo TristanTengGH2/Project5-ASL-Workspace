@@ -35,6 +35,15 @@ Record what informs your build decisions: the questions you investigated, useful
 - A preliminary two-class held-out validation smoke test used five train clips and three validation clips per class. One-nearest-neighbor and class-centroid baselines each reached 4/6 top-1 (`66.7%`) but produced different confusion patterns. Synthetic idle and degraded inputs were always assigned a known class because no rejection threshold exists. This is not an integration-ready model and does not satisfy the five-sign recognition gate.
 - Decision: keep landmark contract v1 and the range-based sample tooling. Do not export the two-class model. Resume the five-sign, signer-separated evaluation only after the official archive server is reachable; then revise or reduce the provisional 25-sign list in `training/vocabulary-candidates.md` using counts, overlay inspection, and confusion evidence.
 
+### Nov 6 — Completed five-sign feasibility run
+
+- The source server recovered and the bounded sample completed: 55 videos and 301.5 MB, with five training, three validation, and three test clips per sign across `after`, `hear`, `man`, `pen`, and `puppy`. Filename signer prefixes are distinct within each sign/split sample; the official archives keep train, validation, and test signers separated.
+- All 55 clips produced `64 x 188` tensors. Selected body anchors were available in every decoded frame. Hand coverage varied from 12.2% to 100%. One `pen` training clip was a 755-frame outlier with 14% hand coverage; it remained in the honest first run rather than being removed after seeing results.
+- Without dominant-hand normalization, validation top-1 was 40.0% for one-nearest-neighbor and 26.7% for class-centroid. The contract was corrected to canonical dominant/non-dominant slots because anatomical left/right slots unfairly encode signer handedness. With that correction, validation top-1 was 20.0% and 33.3%; test top-1 was 33.3% and 20.0%. The correction is retained as a fairness/input-contract rule even though it did not rescue the distance baselines.
+- Re-testing the three low-coverage `after` validation clips with the PopSign paper's 0.5 detection/0.1 tracking setting changed coverage from 17.0/12.2/20.8% to 14.9/8.2/22.6%. This setting was rejected and the earlier 0.4 thresholds retained.
+- Validation-only vocabulary reduction selected `hear` plus `puppy` for one-nearest-neighbor; it scored 5/6 on validation and 5/6 on test. This post-reduction two-class result is useful diagnostic evidence, not enough classes or examples for product integration. No model is exported.
+- Decision required: either approve a larger per-class sample and one small temporal model, or reduce the first supported vocabulary to a deliberately tiny proof. Phase 3 browser integration remains blocked until the Developer sets the acceptable feasibility target.
+
 ## Scope
 
 ### Stretch goals
