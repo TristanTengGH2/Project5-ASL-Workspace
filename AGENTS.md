@@ -46,6 +46,10 @@ When the Developer directs the Agent to save a transcript, save the entire text 
 
 Fill in as the project takes shape: how to run it locally, how to test it, and any commands or structure that aren't obvious from the code.
 
+## Version control
+
+After every approved, verified major checkpoint, commit the relevant source and documentation changes and push the commit to `origin/main`. Before committing, confirm that secrets, downloaded datasets, extracted landmarks, training artifacts, and identifiable webcam or dataset imagery are not staged. Small unfinished edits may remain local until they form a meaningful checkpoint.
+
 ## Run locally
 
 Node is installed outside the default PATH: `export PATH="$HOME/.local/node-v26.13.0-darwin-arm64/bin:$PATH"`.
