@@ -72,9 +72,9 @@ This file indexes visual revision evidence. Store original UI and performance sc
 
 ## 2026-11-09 — Post-trim v2 temporal and interval review
 
-- **Images:** Local ignored artifacts `training-artifacts/phase2-temporal-fidelity/temporal-fidelity.png` and `training-artifacts/phase2-v2-active-interval-review/popsign-active-intervals.png`.
+- **Images:** Local ignored artifacts `training-artifacts/phase2-temporal-fidelity/temporal-fidelity.png`, `training-artifacts/phase2-v2-active-interval-review/popsign-active-intervals.png`, `after-8037-mediapipe-scan-sheet.png`, and `after-8037-full-mediapipe-overlay.mp4` in the latter directory.
 - **Source:** The fidelity plot contains derived v2 landmark metrics. The interval sheet contains identifiable PopSign source-video frames and must not be committed or redistributed.
 - **Checkpoint:** Verify the provisionally approved 48-frame count against raw v2 active intervals and inspect representative plus longest-clip boundaries.
-- **Observed:** Only 48 passed both sources' motion-retention and hand-presence thresholds. Automatic trimming reduced PopSign's median 64 decoded frames to 39 active frames and its 755-frame outlier to 110. Four representative sign rows and the longest clip show hands in signing space, but the representative `after` row is a false-positive tracked interval with no visible hand.
-- **Decision:** The visual checkpoint is not fully accepted. Await Developer approval to exclude rejected intervals and review the remaining clips before retraining.
-- **Revision consequence:** Keep contract v2 provisional and keep all source frames local. Do not enter Phase 3.
+- **Observed:** Only 48 passed both sources' motion-retention and hand-presence thresholds. Automatic trimming reduced PopSign's median 64 decoded frames to 39 active frames and its 755-frame outlier to 110. The full `after` scan corrected the first interpretation: the source clip is valid, but frames 0–18 contain intermittent false hand-on-face landmarks, frames 19–26 have no hand, and frames 27–46 track the actual moving hand. The selector chose the earlier false run after a length tie. Motion blur did not detach the real landmarks enough to be the primary failure.
+- **Decision:** The interval checkpoint is not accepted. Revise the selector and rerun extraction and temporal fidelity; do not exclude the valid source clip.
+- **Revision consequence:** Keep contract v2 and 48 frames provisional, keep all identifiable frames local, and do not retrain or enter Phase 3.

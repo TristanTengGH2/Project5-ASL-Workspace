@@ -73,8 +73,17 @@ Record what informs your build decisions: the questions you investigated, useful
 - Sixteen, 24, and 32 frames failed. On PopSign, 32 retained 79.1% median wrist-path motion and 70.8% local hand motion. Forty-eight was the only passing count on both sources: Google retained 100% median wrist/hand motion with 83.8%/79.7% p10; PopSign retained 89.6%/88.4% median and 77.0%/73.6% p10. Presence coverage p90 error was 2.1% Google and 1.6% PopSign.
 - The Developer provisionally approved 48. The post-trim check again found it was the only passing count. Google retained 100% median wrist and local-hand motion at 48 with p10 values above the 65% floor. PopSign retained 100% median motion, with 83.4% wrist and 78.7% hand p10 retention; its p90 presence-coverage error was 3.4%.
 - Automatic trimming reduced the median Google sequence from 26.5 to 15 frames and the median PopSign sequence from 64 to 39. The 755-frame PopSign outlier was reduced to 110 frames. These figures show that the rule removes substantial inactive footage but do not prove every boundary is a sign rather than a tracked reach.
-- Visual inspection confirmed usable signing-space hands in the representative `hear`, `man`, `pen`, and `puppy` rows and the 755-frame outlier's trimmed interval. It rejected the representative `after` row: no hand is visible in the source frames even though MediaPipe reports intermittent hand presence across the selected interval. This is a tracker false positive, not a resampling failure.
-- **Recommendation pending Developer approval:** exclude visually rejected intervals and review the remaining PopSign boundaries before training. If accepted, freeze 48 for one controlled v2 retraining run. The tracker remains the measured device bottleneck, so reducing to 32 would discard hand motion without halving live tracking cost.
+- The first three-frame review incorrectly treated one representative `after` clip as an invalid source example. A subsequent full 69-frame MediaPipe overlay showed a valid sign later in the clip: false hand-on-face landmarks occur intermittently in frames 0–18, frames 19–26 have no hand, and the real hand is tracked in frames 27–46. The longest-run selector tied the false and real runs and chose the earlier one, so the extracted interval—not the source clip—is invalid.
+- The real hand rises from rest in frames 27–34 before the main movement. Linguistic segmentation distinguishes preparation from the meaningful stroke, but the model still needs a short lead-in to retain starting handshape, orientation, and location. The revised selector should prefer detection density and continuity, retain bounded context, and avoid relying on the handedness category score as a hand-validity score.
+- **Recommendation pending Developer approval:** revise interval selection, regenerate both source adapters, and repeat the 48-frame fidelity test before training. The tracker remains the measured device bottleneck, so reducing to 32 would discard hand motion without halving live tracking cost.
+
+### Nov 9 — Catalog extensions and transcription scope
+
+- Established ASL vocabulary can expand through compounds, lexicalized fingerspelling, borrowing, and other language-specific processes. These processes do not justify automatically assembling arbitrary handshape, movement, and location pieces into a claimed new sign.
+- Slang and informal variants are documented through community use and can differ by region, generation, community, register, and time. A future catalog entry would need meaning in context, source/attestation, region or community when known, register and sensitivity, related variants, review date, and verification status. Unsourced submissions must not be presented as accepted ASL.
+- A five-week catalog could support sourced expression strategies for unfamiliar terms—an established sign, fingerspelling, an established compound, or an attributed descriptive strategy—and a term-request workflow. Automatic sign invention remains outside the approved product.
+- Continuous recognition produces an unsegmented sign/gloss sequence; ASL-to-English translation additionally requires grammar, spatial reference, nonmanual information, context, and English generation. The current PopSign and Google sources contain isolated signs and do not support that claim. Natural fingerspelling and emerging slang add an open-vocabulary problem.
+- **Developer decision:** continuous ASL-to-English transcription, including slang-aware transcription, is outside the five-week scope. If the isolated-sign product finishes early, it may be considered only as a separately specified research extension. A future isolated-result history must be labeled as an attempt history or recognition log, not a transcript.
 
 ## Scope
 
@@ -82,9 +91,16 @@ Record what informs your build decisions: the questions you investigated, useful
 
 Keep the current stretch goals in priority order, starting from your approved pitch, noting cuts and additions.
 
+1. Learn mode after the isolated recognition and lookup loop is stable.
+2. Saved attempts and uploaded-video recognition after privacy and storage behavior are specified.
+3. Sourced slang, regional-variant, and unfamiliar-term expression metadata after the core catalog is verified.
+4. Continuous recognition or ASL-to-English transcription only if the five-week deliverables finish early and a continuous-language data, performance, and community-review plan is separately approved.
+
 ### Scope changes
 
 Record consequential changes to the approved scope: what changed, why, and what was added or cut. Update `spec.md` when a change alters the intended behavior.
+
+- **Nov 9:** Continuous ASL-to-English transcription was explicitly deferred beyond the five-week scope. The current project remains an isolated-sign recognizer and lookup tool. This prevents an isolated gloss log from being misrepresented as conversational translation and avoids silently expanding into continuous segmentation, grammar, face/nonmanual interpretation, open-vocabulary fingerspelling, and slang.
 
 ## Sources and credits
 
@@ -113,6 +129,12 @@ List every external source, code library, asset, and dataset you use, with its l
 - Learner lookup research: Towards an AI-Driven Video-Based American Sign Language Dictionary, https://arxiv.org/html/2504.05857v1
 - Camera-based lookup prototypes: https://link.springer.com/chapter/10.1007/978-3-030-70650-0_14 and https://arxiv.org/abs/2407.13571v1
 - Deaf community perspectives on sign language technology: Northeastern survey (2026), https://news.northeastern.edu/2026/03/19/sign-language-technology-skepticism/
+- ASL variation documentation approach: ASL Signbank FAQ, https://aslsignbank.haskins.yale.edu/about/FAQs/
+- ASL lexical and phonological metadata: ASL-LEX 2.0, https://asl-lex.org/about.html
+- Sign preparation, stroke, retraction, and movement-epenthesis segmentation: Yang, Sarkar & Loeding (2010), https://pubmed.ncbi.nlm.nih.gov/20075472/
+- MediaPipe Hand Landmarker outputs and confidence thresholds: https://developers.google.com/edge/mediapipe/solutions/vision/hand_landmarker?tab=Python
+- Continuous ASL dataset and coarticulation evidence: How2Sign, https://openaccess.thecvf.com/content/CVPR2021/html/Duarte_How2Sign_A_Large-Scale_Multimodal_Dataset_for_Continuous_American_Sign_Language_CVPR_2021_paper.html
+- Fingerspelling within ASL-to-English translation: Tanzer (2025), https://aclanthology.org/2025.naacl-long.19/
 
 ### Assets
 

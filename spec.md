@@ -24,6 +24,8 @@ The experience should feel responsive, honest, and low-pressure. The camera view
 
 Translate and unknown-sign lookup are the priorities for this version. Learn mode, saved attempts, uploaded video, and an optional in-browser LLM re-ranker remain later work.
 
+Continuous ASL recognition and ASL-to-English transcription are outside the five-week scope. A future investigation may consider them only if the approved isolated-sign experience is complete early. A timestamped list of isolated recognition attempts, if later added, must be called an attempt history or recognition log rather than an ASL transcript. Open-vocabulary slang, fingerspelling, sentence grammar, and conversational translation are not implied by that log.
+
 The supported language is American Sign Language (ASL) only. Other sign languages are separate languages and are not included. Results use English glosses as labels for possible ASL sign matches; a gloss is not assumed to be a complete or one-to-one English translation.
 
 The first supported environment is the current desktop version of Chrome on the Developer's Mac. Safari, other desktop browsers, and mobile devices are compatibility checks after the core works; they are not allowed to silently broaden the initial acceptance target.
@@ -226,6 +228,7 @@ Consequential structural decisions, the alternatives considered, and why you cho
 | Build a small versioned Handshape catalog that references PopSign | Copy PopSign into a new database or claim an authoritative ASL dictionary | Gives the app and training tools one licensed metadata contract while preserving provenance and keeping media out of Git |
 | Use Standard and Reduced device modes | One lowest-common-denominator tracker or many hardware tiers | Preserves detailed hands, makes reduced body support explicit, and avoids multiplying untested configurations |
 | Revise preprocessing through a separate contract v2 | Keep incompatible v1 source features or overwrite historical evidence | Cross-source testing exposed reversed handedness, unequal clip intervals, and tracker-specific hip/visibility channels; a versioned contract keeps the correction reproducible |
+| Keep continuous ASL transcription outside the five-week scope | Treat isolated gloss predictions as a transcript or expand immediately into conversation translation | Continuous translation needs sign segmentation, coarticulation, facial and spatial grammar, fingerspelling, context, and continuous-language data that the current isolated-sign sources and performance baseline do not provide |
 
 ### Provisional evaluation record
 
