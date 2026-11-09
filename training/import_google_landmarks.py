@@ -14,14 +14,14 @@ import csv
 import hashlib
 import json
 import random
-import shutil
-import subprocess
 import sys
 import zipfile
 from collections import Counter, defaultdict
 from pathlib import Path
+from urllib.parse import quote
 
 import numpy as np
+import requests
 
 
 COMPETITION = "asl-signs"
@@ -29,6 +29,8 @@ CONTRACT_PATH = Path("training/landmark-contract.v1.json")
 DEFAULT_DATASET_ROOT = Path("datasets/google-isolated-signs")
 DEFAULT_OUTPUT = Path("training-artifacts/google-five-sign-extraction")
 DEFAULT_SIGNS = ("after", "hear", "man", "pen", "puppy")
+DEFAULT_TOKEN_PATH = Path.home() / ".kaggle" / "access_token"
+DOWNLOAD_URL = "https://www.kaggle.com/api/v1/competitions/data/download"
 SPLIT_PARTICIPANT_COUNTS = {"train": 13, "val": 4, "test": 4}
 BODY_PAIRS = ((1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (11, 12))
 
@@ -41,18 +43,6 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def kaggle_executable() -> Path:
-    beside_python = Path(sys.executable).with_name("kaggle")
-    if beside_python.exists():
-        return beside_python
-    command = shutil.which("kaggle")
-    if command:
-        return Path(command)
-    raise RuntimeError(
-        "Kaggle CLI is not installed. Install training/requirements.txt in .venv first."
-    )
-
-
 def safe_extract(zip_path: Path, destination: Path) -> None:
     destination = destination.resolve()
     with zipfile.ZipFile(zip_path) as archive:
@@ -63,47 +53,63 @@ def safe_extract(zip_path: Path, destination: Path) -> None:
         archive.extractall(destination)
 
 
-def kaggle_download(remote_path: str, dataset_root: Path) -> Path:
+def read_access_token(token_path: Path) -> str:
+    try:
+        token = token_path.read_text(encoding="utf-8").strip()
+    except OSError as error:
+        raise RuntimeError(
+            f"Kaggle access token not found at {token_path}. Generate a personal API "
+            "token and save it there with owner-only permissions."
+        ) from error
+    if not token.startswith("KGAT_") or len(token) < 20:
+        raise RuntimeError(f"Kaggle access token at {token_path} is not valid")
+    return token
+
+
+def kaggle_download(remote_path: str, dataset_root: Path, token: str) -> Path:
     expected = dataset_root / remote_path
     if expected.exists():
         return expected
     dataset_root.mkdir(parents=True, exist_ok=True)
-    command = [
-        str(kaggle_executable()),
-        "competitions",
-        "download",
-        "-c",
-        COMPETITION,
-        "-f",
-        remote_path,
-        "-p",
-        str(dataset_root),
-    ]
-    result = subprocess.run(command, text=True, capture_output=True, check=False)
-    if result.returncode:
-        detail = (result.stderr or result.stdout).strip()
+    # Kaggle expects a nested competition filename as one encoded path segment.
+    encoded_path = quote(remote_path, safe="")
+    url = f"{DOWNLOAD_URL}/{COMPETITION}/{encoded_path}"
+    response = requests.get(
+        url,
+        headers={"Authorization": f"Bearer {token}"},
+        stream=True,
+        timeout=(15, 120),
+    )
+    if response.status_code in (401, 403):
         raise RuntimeError(
-            f"Kaggle download failed for {remote_path}: {detail}\n"
-            "Confirm that local Kaggle authentication is configured and that the "
-            "competition rules have been accepted in the browser."
+            f"Kaggle denied access to {remote_path} (HTTP {response.status_code}). "
+            "Confirm the token is active and the competition rules are accepted."
         )
-    if expected.exists():
-        return expected
-    candidates = [dataset_root / Path(remote_path).name]
-    candidates.extend(dataset_root.glob(f"{Path(remote_path).name}*.zip"))
-    for candidate in candidates:
-        if not candidate.exists():
-            continue
-        if candidate.suffix == ".zip":
-            safe_extract(candidate, dataset_root)
-            candidate.unlink()
-            if expected.exists():
-                return expected
-        elif candidate.name == expected.name:
-            expected.parent.mkdir(parents=True, exist_ok=True)
-            candidate.replace(expected)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as error:
+        raise RuntimeError(
+            f"Kaggle download failed for {remote_path} (HTTP {response.status_code})"
+        ) from error
+    temporary = dataset_root / ".download-in-progress"
+    with temporary.open("wb") as file:
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
+            if chunk:
+                file.write(chunk)
+    if zipfile.is_zipfile(temporary):
+        safe_extract(temporary, dataset_root)
+        temporary.unlink()
+        if expected.exists():
             return expected
-    raise RuntimeError(f"Kaggle reported success but {remote_path} was not found")
+        extracted = dataset_root / Path(remote_path).name
+        if extracted.exists():
+            expected.parent.mkdir(parents=True, exist_ok=True)
+            extracted.replace(expected)
+            return expected
+        raise RuntimeError(f"Kaggle archive did not contain {remote_path}")
+    expected.parent.mkdir(parents=True, exist_ok=True)
+    temporary.replace(expected)
+    return expected
 
 
 def read_metadata(path: Path, signs: set[str]) -> list[dict[str, str]]:
@@ -324,6 +330,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset-root", type=Path, default=DEFAULT_DATASET_ROOT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--token-path", type=Path, default=DEFAULT_TOKEN_PATH)
     parser.add_argument("--signs", nargs="+", default=list(DEFAULT_SIGNS))
     parser.add_argument("--train", type=int, default=20)
     parser.add_argument("--val", type=int, default=5)
@@ -333,7 +340,8 @@ def main() -> int:
     if min(args.train, args.val, args.test) < 1:
         parser.error("All split limits must be positive")
 
-    metadata = kaggle_download("train.csv", args.dataset_root)
+    token = read_access_token(args.token_path)
+    metadata = kaggle_download("train.csv", args.dataset_root, token)
     rows = read_metadata(metadata, set(args.signs))
     splits = participant_splits(rows, args.seed)
     limits = {"train": args.train, "val": args.val, "test": args.test}
@@ -343,7 +351,7 @@ def main() -> int:
     for index, item in enumerate(selected, start=1):
         remote_path = item["path"]
         print(f"[{index}/{len(selected)}] {item['split']} {item['sign']}: {remote_path}", flush=True)
-        source_path = kaggle_download(remote_path, args.dataset_root)
+        source_path = kaggle_download(remote_path, args.dataset_root, token)
         tensor_path = args.output / "tensors" / item["split"] / item["sign"] / f"{item['sequence_id']}.npz"
         report = convert_sequence(source_path, contract, tensor_path)
         report.update(

@@ -217,6 +217,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - **Pass evidence:** 150 selected sequences, disjoint participant lists, exact tensor/split counts, one deterministic GRU result, and a separately labeled PopSign transfer result. Remain in Phase 2 until the Developer reviews these results.
 - Importer implementation verification passed on a synthetic parquet sequence: it produced a finite `64 x 188` tensor, selected exactly 150 examples, and kept all 21 synthetic participant IDs disjoint across splits. The first real metadata request stopped before downloading because this Mac has no local Kaggle authentication file. The Developer must accept the competition rules and configure Kaggle locally; credentials must not be committed or pasted into project files.
 
+### Nov 9 — Google-landmark GRU result and decision gate
+
+- Kaggle bearer-token access and competition-rule acceptance were configured outside the repository. No credential was printed, read into project evidence, or committed.
+- The targeted importer downloaded and converted 150 sequences: 20 train and five validation/test examples for each of `after`, `hear`, `man`, `pen`, and `puppy`. The split contains 13 training, four validation, and four test participants with no participant overlap.
+- All tensors were finite `64 x 188` arrays. Hand coverage ranged from 7.4% to 100%; body anchors were present in 100% of frames under the adapter's finite-coordinate rule.
+- The one approved bidirectional GRU stopped after 48 epochs with best epoch 13. It scored 60.0% validation top-1 and 48.0% test top-1, failing the 70% gate. Test per-class correct counts were `after` 1/5, `hear` 4/5, `man` 3/5, `pen` 2/5, and `puppy` 2/5. Unknown-input rejection remains unimplemented, so no browser export was attempted.
+- The exact frozen Google-trained model scored 18.2% on all 55 existing PopSign clips: 13.3% official test, 16.0% train, and 26.7% validation. It predicted `pen` for 41/55 clips, demonstrating severe source/preprocessing shift. This diagnostic did not refit the model or tune a threshold on PopSign.
+- **Developer decision gate:** Phase 2 remains open. Stop before another model run and review the data adapter, source compatibility, training quantity, and vocabulary. Do not enter Phase 3 or add another architecture based on this result.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

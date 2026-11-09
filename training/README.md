@@ -124,9 +124,9 @@ The importer keeps participants disjoint across train, validation, and test,
 downloads only 150 selected sequences, and adapts them to the `64 x 188` input
 shape. This bridge does not replace the final PopSign evaluation.
 
-First accept the `asl-signs` competition rules on Kaggle and configure local
-Kaggle authentication. Do not put a token or credentials in this repository.
-Then run:
+First accept the `asl-signs` competition rules on Kaggle. Generate a personal
+API token and store it at `~/.kaggle/access_token` with owner-only permissions.
+Do not put a token or credentials in this repository. Then run:
 
 ```sh
 .venv/bin/pip install -r training/requirements.txt
@@ -142,3 +142,13 @@ MediaPipe 0.9.0.1 rather than the current browser tracker. Results must be
 labeled as a pipeline-validation benchmark. The already verified 55 PopSign
 clips remain a separate cross-dataset check; never disable TLS verification to
 retrieve additional PopSign files.
+
+After the Google-trained model finishes, evaluate that exact frozen checkpoint
+against the existing verified PopSign extraction without refitting it:
+
+```sh
+.venv/bin/python training/evaluate_temporal_transfer.py
+```
+
+This transfer result is diagnostic only. It must remain separate from the
+Google validation/test score and cannot be used to tune the model.
