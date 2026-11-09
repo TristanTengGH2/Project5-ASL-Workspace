@@ -239,9 +239,11 @@ Record what you tested and what happened. For peer testing, note what people did
 
 - The Developer approved contract v2 with detailed raw hand capture, all 21 local hand landmarks in x/y/z, relative wrist-depth movement, upper-body x/y anchors without hips, binary presence, source-specific handedness, active-interval trimming, and tracker confidence retained only for scan quality.
 - The Developer also approved Standard and Reduced device modes. Both preserve detailed hands; Reduced mode lowers body update cadence and limits its supported signs rather than degrading finger landmarks silently.
-- Shared v2 feature construction passed a synthetic test and produces 167 features per frame. The contract remains provisional because the temporal count has not received final Developer approval and source adapters have not emitted v2 tensors yet.
-- A two-source v1-reference fidelity comparison rejected 16, 24, and 32 frames. Forty-eight was the only candidate meeting the provisional motion-retention and presence-coverage thresholds on both Google and PopSign.
-- **Developer decision gate:** approve 48 as the provisional v2 sequence count. After approval, integrate both source adapters, repeat fidelity on the trimmed v2 sequences, and stop again if 48 no longer passes. Do not retrain before this verification.
+- The Developer provisionally approved 48 frames. Both source adapters now emit finite `48 x 167` tensors plus their variable-length trimmed active intervals: 150 signer-separated Google sequences and 55 PopSign clips.
+- Post-trim fidelity again rejected 16, 24, and 32 frames. At 48 frames, Google retained 100% median wrist and local-hand motion; PopSign retained 100% median for both. Both sources passed the p10 motion and p90 presence-coverage thresholds.
+- Google active intervals contain a median 15 frames from 26.5 decoded frames. PopSign contains a median 39 from 64; its 755-frame outlier was reduced to 110 active frames. A local, Git-ignored PopSign sheet shows representative and longest-clip start/middle/end frames for reach-trimming review.
+- The visual review rejected one representative `after` interval: no hand is visible, but the tracker reports intermittent dominant-hand presence from 0.00–0.67 seconds. Typical `hear`, `man`, `pen`, and `puppy` rows and the longest PopSign clip show hands in signing space. This demonstrates that longest-run trimming cannot turn a false hand detection into a valid example.
+- **Developer decision gate:** approve excluding visually rejected intervals and reviewing the remaining boundaries before the controlled retraining run. Forty-eight remains the provisional frame count; do not retrain or enter Phase 3 yet.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 

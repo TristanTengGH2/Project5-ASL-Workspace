@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download a five-sign Kaggle subset and adapt it to landmark contract v1.
+"""Download a five-sign Kaggle subset and adapt it to landmark contract v1 or v2.
 
 The Google Isolated Sign Language Recognition corpus contains MediaPipe
 landmarks rather than videos. This importer keeps its participant groups
@@ -23,11 +23,19 @@ from urllib.parse import quote
 import numpy as np
 import requests
 
+import landmark_contract_v2 as v2
+
 
 COMPETITION = "asl-signs"
-CONTRACT_PATH = Path("training/landmark-contract.v1.json")
+CONTRACT_PATHS = {
+    1: Path("training/landmark-contract.v1.json"),
+    2: Path("training/landmark-contract.v2.json"),
+}
 DEFAULT_DATASET_ROOT = Path("datasets/google-isolated-signs")
-DEFAULT_OUTPUT = Path("training-artifacts/google-five-sign-extraction")
+DEFAULT_OUTPUTS = {
+    1: Path("training-artifacts/google-five-sign-extraction"),
+    2: Path("training-artifacts/google-five-sign-v2-extraction"),
+}
 DEFAULT_SIGNS = ("after", "hear", "man", "pen", "puppy")
 DEFAULT_TOKEN_PATH = Path.home() / ".kaggle" / "access_token"
 DOWNLOAD_URL = "https://www.kaggle.com/api/v1/competitions/data/download"
@@ -326,10 +334,67 @@ def convert_sequence(path: Path, contract: dict, tensor_path: Path) -> dict:
     }
 
 
+def convert_sequence_v2(path: Path, contract: dict, tensor_path: Path) -> dict:
+    frames = frame_landmarks(read_parquet(path))
+    if not frames:
+        raise RuntimeError(f"No usable landmark rows in {path}")
+    feature_rows = []
+    hand_frames = 0
+    body_frames = 0
+    for _, landmarks in frames:
+        pose = landmarks.get("pose")
+        pose_present = (
+            np.isfinite(pose).all(axis=1) if pose is not None else np.zeros(33, dtype=bool)
+        )
+        features = v2.frame_features(
+            landmarks.get("left_hand"),
+            landmarks.get("right_hand"),
+            pose,
+            pose_present,
+        )
+        feature_rows.append(features)
+        hand_frames += int(bool(features[66] or features[v2.HAND_FEATURES + 66]))
+        body_frames += int(bool(features[v2.HAND_FEATURES * 2 :].reshape(11, 3)[:, 2].any()))
+    source_positions = np.array([frame for frame, _ in frames], dtype=np.float64)
+    prepared = v2.prepare_sequence(np.stack(feature_rows), source_positions)
+    count = contract["sequence"]["normalizedFrameCount"]
+    tensor, selected_indexes = v2.resample_nearest(
+        prepared.features, prepared.source_positions, count
+    )
+    expected_shape = tuple(contract["sequence"]["tensorShape"])
+    if tensor.shape != expected_shape or not np.isfinite(tensor).all():
+        raise RuntimeError(f"Invalid v2 tensor shape or values for {path}: {tensor.shape}")
+    tensor_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        tensor_path,
+        features=tensor,
+        active_features=prepared.features,
+        active_source_positions=prepared.source_positions,
+        source_frame_indexes=prepared.source_positions[selected_indexes],
+    )
+    return {
+        "source": str(path),
+        "sourceSha256": sha256(path),
+        "decodedFrames": len(frames),
+        "activeFrames": len(prepared.features),
+        "activeSourceStart": float(prepared.source_positions[0]),
+        "activeSourceEnd": float(prepared.source_positions[-1]),
+        "handDetectionFrames": hand_frames,
+        "handDetectionRate": hand_frames / len(frames),
+        "bodyAnchorFrames": body_frames,
+        "bodyAnchorRate": body_frames / len(frames),
+        "detectedDominantHand": prepared.dominant_hand,
+        "dominanceMirrored": prepared.dominance_mirrored,
+        "tensor": str(tensor_path),
+        "tensorShape": list(tensor.shape),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset-root", type=Path, default=DEFAULT_DATASET_ROOT)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--contract-version", type=int, choices=(1, 2), default=1)
     parser.add_argument("--token-path", type=Path, default=DEFAULT_TOKEN_PATH)
     parser.add_argument("--signs", nargs="+", default=list(DEFAULT_SIGNS))
     parser.add_argument("--train", type=int, default=20)
@@ -340,20 +405,26 @@ def main() -> int:
     if min(args.train, args.val, args.test) < 1:
         parser.error("All split limits must be positive")
 
+    output = args.output or DEFAULT_OUTPUTS[args.contract_version]
+    contract_path = CONTRACT_PATHS[args.contract_version]
     token = read_access_token(args.token_path)
     metadata = kaggle_download("train.csv", args.dataset_root, token)
     rows = read_metadata(metadata, set(args.signs))
     splits = participant_splits(rows, args.seed)
     limits = {"train": args.train, "val": args.val, "test": args.test}
     selected = select_examples(rows, splits, limits, args.seed)
-    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
     reports = []
     for index, item in enumerate(selected, start=1):
         remote_path = item["path"]
         print(f"[{index}/{len(selected)}] {item['split']} {item['sign']}: {remote_path}", flush=True)
         source_path = kaggle_download(remote_path, args.dataset_root, token)
-        tensor_path = args.output / "tensors" / item["split"] / item["sign"] / f"{item['sequence_id']}.npz"
-        report = convert_sequence(source_path, contract, tensor_path)
+        tensor_path = output / "tensors" / item["split"] / item["sign"] / f"{item['sequence_id']}.npz"
+        report = (
+            convert_sequence_v2(source_path, contract, tensor_path)
+            if args.contract_version == 2
+            else convert_sequence(source_path, contract, tensor_path)
+        )
         report.update(
             {
                 "video": str(
@@ -377,7 +448,7 @@ def main() -> int:
     }
     manifest = {
         "contractVersion": contract["contractVersion"],
-        "contractSha256": sha256(CONTRACT_PATH),
+        "contractSha256": sha256(contract_path),
         "sourceDataset": {
             "name": "Google Isolated Sign Language Recognition Corpus",
             "competition": COMPETITION,
@@ -385,10 +456,16 @@ def main() -> int:
             "format": "MediaPipe Holistic landmark parquet",
         },
         "adapter": {
-            "name": "google-isolated-signs-to-contract-v1",
+            "name": f"google-isolated-signs-to-contract-v{args.contract_version}",
             "timing": "Source frame indexes are used as a uniform-time proxy because timestamps are unavailable.",
             "handedness": "Published left_hand/right_hand type labels are used, then dominant-hand canonicalization is applied.",
-            "confidence": "The corpus has coordinates but no confidence values; finite detections use confidence/visibility 1.0.",
+            "confidence": (
+                "The corpus has coordinates but no confidence values; v2 maps finite coordinates "
+                "to binary presence only."
+                if args.contract_version == 2
+                else "The corpus has coordinates but no confidence values; finite detections use "
+                "confidence/visibility 1.0."
+            ),
             "limitations": "This bridge is suitable for pipeline validation, not a directly comparable PopSign video benchmark.",
         },
         "seed": args.seed,
@@ -396,8 +473,8 @@ def main() -> int:
         "splitCounts": split_counts,
         "videos": reports,
     }
-    args.output.mkdir(parents=True, exist_ok=True)
-    manifest_path = args.output / "extraction-manifest.json"
+    output.mkdir(parents=True, exist_ok=True)
+    manifest_path = output / "extraction-manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Manifest: {manifest_path}")
     print(f"Counts: {split_counts}")

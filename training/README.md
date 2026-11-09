@@ -38,17 +38,26 @@ presence. The resulting frame has 167 features. A browser quality layer may
 still use tracker confidence, but recognition may not learn source-specific
 confidence values.
 
-The final frame count is not yet frozen. Compare 16, 24, 32, and 48 against the
-existing two-source motion evidence with:
+The Developer provisionally approved 48 frames. It is the only tested candidate
+that passed the motion-retention and hand-presence thresholds after both source
+adapters emitted trimmed v2 active intervals. Reproduce the comparison with:
 
 ```sh
 MPLBACKEND=Agg MPLCONFIGDIR=/tmp/handshape-mpl \
   .venv/bin/python training/evaluate_temporal_fidelity.py
 ```
 
-This first comparison uses already normalized 64-frame v1 sequences as its
-reference. Repeat it after both source adapters emit v2 active intervals before
-training. No v2 model may be trained while `normalizedFrameCount` is null.
+The comparison uses each source's variable-length v2 active interval as the
+reference. It does not train a model. Review PopSign start/middle/end frames with:
+
+```sh
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/handshape-mpl \
+  .venv/bin/python training/render_active_interval_review.py
+```
+
+That image contains identifiable dataset participants and must remain in the
+Git-ignored `training-artifacts/` directory. Retraining remains a separate
+Developer checkpoint after the interval review.
 
 ## Small PopSign downloads
 
@@ -78,7 +87,8 @@ python3 -m venv .venv
 cd app && npm run fetch-assets && cd ..
 MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
   datasets/popsign-v1-0/sample \
-  --handedness-mode keep
+  --handedness-mode keep \
+  --contract-version 2
 ```
 
 `keep` is the verified PopSign source rule. A Nov 9 cross-source audit found
@@ -92,6 +102,16 @@ The extractor records source, contract, and model hashes; decoded-frame counts;
 hand/body detection rates; fixed tensor shapes; and the source-frame indexes
 selected during timestamp-based resampling. Source images remain local because
 they contain identifiable dataset participants.
+
+Adapt the signer-separated Google landmark subset to the same v2 contract with:
+
+```sh
+.venv/bin/python training/import_google_landmarks.py --contract-version 2
+```
+
+The token stays outside the repository. Both v2 adapters preserve their raw
+trimmed `active_features` beside the fixed `48 x 167` tensor so temporal-fidelity
+checks do not compare one already-resampled representation against another.
 
 For the bounded five-sign feasibility run, download five training signers and
 three held-out signers in each official validation/test split:

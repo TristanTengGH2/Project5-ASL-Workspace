@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare candidate sequence lengths against the 64-frame v1 evidence."""
+"""Compare candidate sequence lengths against raw active-interval evidence."""
 
 from __future__ import annotations
 
@@ -13,12 +13,11 @@ import numpy as np
 
 
 DEFAULT_SOURCES = (
-    "google=training-artifacts/google-five-sign-extraction/extraction-manifest.json",
-    "popsign=training-artifacts/phase2-five-sign-extraction-keep/extraction-manifest.json",
+    "google=training-artifacts/google-five-sign-v2-extraction/extraction-manifest.json",
+    "popsign=training-artifacts/phase2-five-sign-v2-extraction/extraction-manifest.json",
 )
 DEFAULT_OUTPUT = Path("training-artifacts/phase2-temporal-fidelity")
 CANDIDATES = (16, 24, 32, 48)
-REFERENCE_COUNT = 64
 THRESHOLDS = {
     "medianMotionRetention": 0.85,
     "p10MotionRetention": 0.65,
@@ -38,9 +37,13 @@ def load_sequences(manifest_path: Path) -> list[np.ndarray]:
     sequences = []
     for item in manifest["videos"]:
         with np.load(item["tensor"]) as archive:
-            features = archive["features"].astype(np.float32)
-        if features.shape != (REFERENCE_COUNT, 188):
-            raise RuntimeError(f"Expected v1 reference shape [64, 188], got {features.shape}")
+            if "active_features" not in archive:
+                raise RuntimeError(
+                    f"{item['tensor']} has no active_features; rerun the source adapter with v2"
+                )
+            features = archive["active_features"].astype(np.float32)
+        if features.ndim != 2 or features.shape[1] != 167:
+            raise RuntimeError(f"Expected raw v2 shape [frames, 167], got {features.shape}")
         sequences.append(features)
     return sequences
 
@@ -143,10 +146,10 @@ def render(measurements: dict, output_path: Path) -> None:
         axis.set_title(title)
         axis.set_ylim(0, 1.2)
         axis.grid(axis="y", alpha=0.2)
-    axes[0].set_ylabel("Candidate path length / 64-frame reference")
+    axes[0].set_ylabel("Candidate path length / raw active-interval reference")
     figure.suptitle(
         "Temporal fidelity of uniform nearest-frame resampling\n"
-        "Reference is existing contract-v1 evidence; rerun after v2 active-interval extraction."
+        "Reference is each source's raw contract-v2 active interval."
     )
     figure.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,15 +178,15 @@ def main() -> int:
     ]
     recommendation = min(passing) if passing else None
     report = {
-        "status": "provisional-v1-reference",
-        "referenceFrameCount": REFERENCE_COUNT,
+        "status": "post-v2-active-interval",
+        "reference": "variable-length raw active_features",
         "candidateFrameCounts": list(CANDIDATES),
         "thresholds": THRESHOLDS,
         "sources": summaries,
         "recommendedCount": recommendation,
         "limitation": (
-            "This test measures fidelity against already normalized contract-v1 sequences. "
-            "Repeat it after contract-v2 active-interval extraction before training."
+            "The automatic longest-tracked-run interval cannot always distinguish a tracked "
+            "reach from a sign; ambiguous clips still require visual review."
         ),
     }
     args.output.mkdir(parents=True, exist_ok=True)

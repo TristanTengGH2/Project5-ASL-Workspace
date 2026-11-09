@@ -1,6 +1,6 @@
 {
   "contractVersion": 2,
-  "status": "provisional-temporal-count",
+  "status": "provisional-active-interval-review-flagged",
   "tracker": {
     "family": "MediaPipe landmarks with source-specific adapters",
     "modelHashesRequiredForTrainingRun": true,
@@ -90,12 +90,13 @@
       "offlineCaveat": "Automatic trimming cannot always distinguish a tracked reach from the sign; ambiguous source clips remain review failures rather than silently trusted examples."
     },
     "candidateNormalizedFrameCounts": [16, 24, 32, 48],
-    "normalizedFrameCount": null,
-    "selectionRule": "Choose the smallest tested count that preserves detailed hand and wrist motion across both approved sources; Developer approval is required.",
+    "normalizedFrameCount": 48,
+    "selectionRule": "The Developer provisionally approved 48 after it was the smallest candidate to pass both the initial v1-reference check and the post-trim v2 active-interval check on Google and PopSign. Active-interval visual review remains required before training.",
     "resampling": "Nearest observed source frame by timestamp or source-frame index across the active interval; do not interpolate across missing detections.",
     "missingValues": "Use zero coordinates only together with an explicit zero presence value.",
     "frameFeatureCount": 167,
     "frameFeatureLayout": "dominant hand 67, non-dominant hand 67, then 11 upper-body anchors x 3",
+    "tensorShape": [48, 167],
     "candidateTensorShapes": [[16, 167], [24, 167], [32, 167], [48, 167]]
   },
   "requirements": {

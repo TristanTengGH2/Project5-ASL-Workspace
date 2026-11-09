@@ -28,12 +28,18 @@ def usable(points: np.ndarray | None, count: int) -> bool:
     return points is not None and points.shape == (count, 3) and bool(np.isfinite(points).all())
 
 
+def pose_shape_valid(pose: np.ndarray | None) -> bool:
+    return pose is not None and pose.shape == (33, 3)
+
+
 def shoulder_reference(
     pose: np.ndarray | None, pose_present: np.ndarray | None
 ) -> tuple[np.ndarray | None, float | None]:
-    if not usable(pose, 33):
+    if not pose_shape_valid(pose):
         return None, None
     assert pose is not None
+    if not np.isfinite(pose[[11, 12]]).all():
+        return None, None
     if pose_present is not None and not bool(pose_present[11] and pose_present[12]):
         return None, None
     origin = (pose[11] + pose[12]) / 2
@@ -72,11 +78,13 @@ def body_features(
     shoulder_scale: float | None,
 ) -> np.ndarray:
     output = np.zeros(len(BODY_ANCHORS) * 3, dtype=np.float32)
-    if not usable(pose, 33) or shoulder_origin is None or shoulder_scale is None:
+    if not pose_shape_valid(pose) or shoulder_origin is None or shoulder_scale is None:
         return output
     assert pose is not None
     for output_index, pose_index in enumerate(BODY_ANCHORS):
-        present = pose_present is None or bool(pose_present[pose_index])
+        present = (pose_present is None or bool(pose_present[pose_index])) and bool(
+            np.isfinite(pose[pose_index]).all()
+        )
         if not present:
             continue
         start = output_index * 3

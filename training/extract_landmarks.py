@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract contract-v1 tensors and local inspection overlays from sign videos."""
+"""Extract versioned landmark tensors and local inspection overlays from sign videos."""
 
 from __future__ import annotations
 
@@ -15,9 +15,17 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+import landmark_contract_v2 as v2
 
-CONTRACT_PATH = Path("training/landmark-contract.v1.json")
-DEFAULT_OUTPUT = Path("training-artifacts/phase2-extraction")
+
+CONTRACT_PATHS = {
+    1: Path("training/landmark-contract.v1.json"),
+    2: Path("training/landmark-contract.v2.json"),
+}
+DEFAULT_OUTPUTS = {
+    1: Path("training-artifacts/phase2-extraction"),
+    2: Path("training-artifacts/phase2-v2-extraction"),
+}
 HAND_MODEL = Path("app/public/models/hand_landmarker.task")
 POSE_MODEL = Path("app/public/models/pose_landmarker_lite.task")
 HAND_CONNECTIONS = (
@@ -69,6 +77,12 @@ def corrected_label(model_label: str, mode: str) -> str:
 
 def xyz(landmark: object) -> np.ndarray:
     return np.array([landmark.x, landmark.y, landmark.z], dtype=np.float32)
+
+
+def landmark_array(landmarks: list[object] | None, count: int) -> np.ndarray | None:
+    if landmarks is None or len(landmarks) != count:
+        return None
+    return np.stack([xyz(point) for point in landmarks]).astype(np.float32)
 
 
 def hand_features(
@@ -300,6 +314,137 @@ def extract_video(
     }
 
 
+def extract_video_v2(
+    video_path: Path,
+    hand_landmarker: object,
+    pose_landmarker: object,
+    contract: dict,
+    output_root: Path,
+    handedness_mode: str,
+    maximum_side: int,
+) -> dict:
+    capture = cv2.VideoCapture(str(video_path))
+    if not capture.isOpened():
+        raise RuntimeError(f"Could not open {video_path}")
+    fps = float(capture.get(cv2.CAP_PROP_FPS))
+    if fps <= 0:
+        raise RuntimeError(f"Invalid FPS for {video_path}")
+    source_frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    anchor_indexes = [item["index"] for item in contract["body"]["anchorOrder"]]
+    frames: list[ExtractedFrame] = []
+    frame_index = 0
+    try:
+        while True:
+            ok, bgr = capture.read()
+            if not ok:
+                break
+            timestamp_ms = frame_index * 1000.0 / fps
+            tracked = resized_for_tracking(bgr, maximum_side)
+            rgb = cv2.cvtColor(tracked, cv2.COLOR_BGR2RGB)
+            image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+            timestamp_integer = round(timestamp_ms)
+            hands_result = hand_landmarker.detect_for_video(image, timestamp_integer)
+            pose_result = pose_landmarker.detect_for_video(image, timestamp_integer)
+            pose_landmarks = pose_result.pose_landmarks[0] if pose_result.pose_landmarks else None
+            pose = landmark_array(pose_landmarks, 33)
+            pose_present = (
+                np.array([point.visibility >= 0.35 for point in pose_landmarks], dtype=bool)
+                if pose_landmarks
+                else np.zeros(33, dtype=bool)
+            )
+
+            slots: dict[str, tuple[list[object], float]] = {}
+            labels: list[str] = []
+            for landmarks, categories in zip(hands_result.hand_landmarks, hands_result.handedness):
+                category = categories[0]
+                label = corrected_label(category.category_name, handedness_mode)
+                labels.append(label)
+                prior = slots.get(label)
+                if label in ("left", "right") and (prior is None or category.score > prior[1]):
+                    slots[label] = (landmarks, float(category.score))
+            left = landmark_array(slots["left"][0], 21) if "left" in slots else None
+            right = landmark_array(slots["right"][0], 21) if "right" in slots else None
+            features = v2.frame_features(left, right, pose, pose_present)
+            _, shoulder_scale = v2.shoulder_reference(pose, pose_present)
+            overlay = draw_overlay(
+                bgr, hands_result.hand_landmarks, labels, pose_landmarks, anchor_indexes
+            )
+            frames.append(
+                ExtractedFrame(
+                    timestamp_ms,
+                    features,
+                    len(hands_result.hand_landmarks),
+                    shoulder_scale is not None,
+                    overlay,
+                )
+            )
+            frame_index += 1
+    finally:
+        capture.release()
+    if not frames:
+        raise RuntimeError(f"No decoded frames in {video_path}")
+
+    raw_features = np.stack([frame.features for frame in frames])
+    source_positions = np.array([frame.timestamp_ms for frame in frames], dtype=np.float64)
+    prepared = v2.prepare_sequence(raw_features, source_positions)
+    count = contract["sequence"]["normalizedFrameCount"]
+    tensor, selected_indexes = v2.resample_nearest(
+        prepared.features, prepared.source_positions, count
+    )
+    expected_shape = tuple(contract["sequence"]["tensorShape"])
+    if tensor.shape != expected_shape or not np.isfinite(tensor).all():
+        raise RuntimeError(f"Invalid v2 tensor shape or values for {video_path}: {tensor.shape}")
+
+    stem = video_path.stem
+    tensor_dir = output_root / "tensors"
+    inspection_dir = output_root / "inspection" / stem
+    tensor_dir.mkdir(parents=True, exist_ok=True)
+    inspection_dir.mkdir(parents=True, exist_ok=True)
+    tensor_path = tensor_dir / f"{stem}.npz"
+    np.savez_compressed(
+        tensor_path,
+        features=tensor,
+        active_features=prepared.features,
+        active_source_positions=prepared.source_positions,
+        source_timestamps_ms=prepared.source_positions[selected_indexes],
+    )
+
+    detected_indexes = [index for index, frame in enumerate(frames) if frame.hands_detected]
+    inspection_indexes = []
+    if detected_indexes:
+        inspection_indexes = sorted(
+            {
+                detected_indexes[0],
+                detected_indexes[len(detected_indexes) // 2],
+                detected_indexes[-1],
+            }
+        )
+    for index in inspection_indexes:
+        cv2.imwrite(str(inspection_dir / f"frame-{index:04d}.jpg"), frames[index].overlay)
+
+    hand_frames = sum(frame.hands_detected > 0 for frame in frames)
+    body_frames = sum(frame.body_available for frame in frames)
+    return {
+        "video": str(video_path),
+        "videoSha256": sha256(video_path),
+        "sourceFramesReported": source_frame_count,
+        "decodedFrames": len(frames),
+        "activeFrames": len(prepared.features),
+        "activeStartMs": float(prepared.source_positions[0]),
+        "activeEndMs": float(prepared.source_positions[-1]),
+        "fps": fps,
+        "handDetectionFrames": hand_frames,
+        "handDetectionRate": hand_frames / len(frames),
+        "bodyAnchorFrames": body_frames,
+        "bodyAnchorRate": body_frames / len(frames),
+        "detectedDominantHand": prepared.dominant_hand,
+        "dominanceMirrored": prepared.dominance_mirrored,
+        "tensor": str(tensor_path),
+        "tensorShape": list(tensor.shape),
+        "inspectionFrames": inspection_indexes,
+    }
+
+
 def videos_from_inputs(inputs: Iterable[str]) -> list[Path]:
     videos: list[Path] = []
     for value in inputs:
@@ -316,17 +461,20 @@ def videos_from_inputs(inputs: Iterable[str]) -> list[Path]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+", help="MP4 files or directories")
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--contract-version", type=int, choices=(1, 2), default=1)
     parser.add_argument("--handedness-mode", choices=("keep", "swap"), required=True)
     parser.add_argument("--maximum-side", type=int, default=960)
     parser.add_argument("--hand-detection-confidence", type=float, default=0.4)
     parser.add_argument("--hand-presence-confidence", type=float, default=0.4)
     parser.add_argument("--hand-tracking-confidence", type=float, default=0.4)
     args = parser.parse_args()
+    output = args.output or DEFAULT_OUTPUTS[args.contract_version]
+    contract_path = CONTRACT_PATHS[args.contract_version]
     videos = videos_from_inputs(args.inputs)
     if not videos:
         parser.error("No MP4 videos found")
-    contract = json.loads(CONTRACT_PATH.read_text(encoding="utf-8"))
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
     for model in (HAND_MODEL, POSE_MODEL):
         if not model.exists():
             parser.error(f"Missing {model}; run npm run fetch-assets from app/")
@@ -355,8 +503,9 @@ def main() -> int:
         # A fresh pair per clip prevents state from crossing signer boundaries.
         with vision.HandLandmarker.create_from_options(hand_options) as hands:
             with vision.PoseLandmarker.create_from_options(pose_options) as pose:
-                report = extract_video(
-                    video, hands, pose, contract, args.output, args.handedness_mode, args.maximum_side
+                extractor = extract_video_v2 if args.contract_version == 2 else extract_video
+                report = extractor(
+                    video, hands, pose, contract, output, args.handedness_mode, args.maximum_side
                 )
         reports.append(report)
         print(
@@ -367,7 +516,7 @@ def main() -> int:
 
     manifest = {
         "contractVersion": contract["contractVersion"],
-        "contractSha256": sha256(CONTRACT_PATH),
+        "contractSha256": sha256(contract_path),
         "handModelSha256": sha256(HAND_MODEL),
         "poseModelSha256": sha256(POSE_MODEL),
         "handednessMode": args.handedness_mode,
@@ -379,8 +528,8 @@ def main() -> int:
         },
         "videos": reports,
     }
-    args.output.mkdir(parents=True, exist_ok=True)
-    manifest_path = args.output / "extraction-manifest.json"
+    output.mkdir(parents=True, exist_ok=True)
+    manifest_path = output / "extraction-manifest.json"
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Manifest: {manifest_path}")
     return 0
