@@ -60,3 +60,12 @@ This file indexes visual revision evidence. Store original UI and performance sc
 - **Observed:** The PopSign `swap` row is reflected onto the opposite body side from Google. The controlled PopSign `keep` row aligns the canonical side. Representative source-frame counts and wrist paths also show substantial interval variation.
 - **Decision:** Evidence supports correcting PopSign handedness and replacing whole-clip contract-v1 resampling with an approved source-neutral contract before retraining.
 - **Revision consequence:** Keep the image local under dataset terms. Do not export the current model or enter Phase 3.
+
+## 2026-11-09 — Temporal-density comparison
+
+- **Image:** Local ignored artifact `training-artifacts/phase2-temporal-fidelity/temporal-fidelity.png`.
+- **Source:** Derived motion-retention distributions from 150 Google and 55 corrected-handedness PopSign landmark sequences; no source-video pixels are included.
+- **Checkpoint:** Compare 16, 24, 32, and 48 model frames against existing 64-frame contract-v1 evidence.
+- **Observed:** Sixteen through 32 frames lose substantial PopSign wrist and local-hand motion. Forty-eight is the only candidate meeting the provisional thresholds on both sources.
+- **Decision:** Await Developer approval of 48, then repeat after contract-v2 active-interval extraction before model training.
+- **Revision consequence:** Prefer hand-motion fidelity over an assumed model-speed gain; the live tracker remains the measured limited-device bottleneck.

@@ -42,10 +42,23 @@ For each feature or behavior you are building, describe what it should do and wh
 - The interface provides a clear mirror or handedness correction control because browser, camera, and model conventions may disagree. Before recognition is accepted, a real-camera test confirms that raising the User's right hand produces the intended right-hand data after any correction.
 - Camera-off, permission-denied, no-camera, no-hands, one-hand, two-hand, and recently-lost states have distinct readable messages.
 - Tracking only processes a new camera frame once; faster display refresh rates must not cause duplicate observations.
-- The target is a smooth real-time preview on the Developer's test device. The app measures processed frames per second and tracking time during testing. The exact performance threshold remains provisional until a real-camera baseline is recorded; visual smoothness and stable capture matter more than claiming a particular frame rate.
+- The target is a smooth real-time preview on the Developer's test device. The accepted current baseline is approximately 19 detailed hand results per second without a growing queue; large side-to-side movements still trail slightly. The app measures processed frames per second, capture-to-result latency, skipped frames, and tracking time during testing.
 - During a scan, the capture controller keeps a small, documented set of body reference points even if the User hides body points in the overlay. Display visibility and model input are separate settings.
 - If the camera disconnects, the tab becomes inactive, or the tracker fails, capture stops safely and the User receives a recovery message instead of a result from an incomplete scan.
 - Tracking-quality messages describe only observable conditions: hands or body anchors outside the frame, missing hands, overlapping hand boxes, unstable landmark movement, or lost anchors. The app does not claim that a particular finger is hidden when the tracker may only be estimating it.
+
+### Device capability and performance
+
+- Calibration runs a short capability check and selects one of two explicit modes; it does not silently reduce hand landmark detail.
+- Standard mode keeps detailed hands at the highest sustainable rate and obtains the approved upper-body anchors outside the critical hand path, such as in a separate worker or at a tested low cadence.
+- Reduced mode still keeps all 21 landmarks for each detected hand. It establishes stable face/shoulder references during calibration and updates body anchors only occasionally or between scans. Signs requiring unavailable body or facial distinctions are not presented as supported in this mode.
+- The minimum-device provisional target is at least 15 detailed hand results per second, no growing frame queue, and no more than approximately 120 ms p95 capture-to-result latency. These numbers must be tested on an identified lower-capability device before becoming a support claim.
+- The preview may stay visually sharp while inference receives a documented downscaled frame. Resolution is reduced only as far as finger tracking remains stable in calibration and real sign tests.
+- Only the latest camera frame may wait for tracking. Old frames are dropped rather than processed late.
+- Raw video frames are released immediately after tracking. A bounded in-memory landmark sequence and small model state are retained during a scan; training data is never loaded by the public app.
+- Camera and workers stop when the User stops scanning or leaves the active experience. Repeated-scan testing checks memory, battery use, and thermal slowdown.
+- Tracker, model, and WASM assets are cached for repeat visits and should total under 10 MB where accuracy permits. Quantization is evaluated only after the unquantized model passes accuracy checks.
+- The baseline must work with WASM in supported Chrome. WebGPU and multithreaded WASM may be optional accelerators but cannot be required because browser support and static-hosting headers vary.
 
 ### Calibration and recalibration
 
@@ -139,8 +152,12 @@ What information the system keeps, where each piece lives, and how it moves and 
 - The catalog contains metadata and source links only. Raw videos, preview media, extracted landmarks, and other dataset files are neither copied into the catalog nor committed to the public app.
 - The first vocabulary contains about 20–30 PopSign signs selected for adequate examples and visual distinction, with some movement-based and two-handed cases when the source data supports them. Selection is documented before training; favorite words alone are not a selection rule.
 - Every model class has a stable ASL sign identifier separate from its displayed English gloss, so alternate meanings or gloss wording do not silently change the model label.
-- A versioned preprocessing contract defines coordinate origin, scale, body-relative location, frame sampling or padding, missing landmarks, handedness, and sequence length. Offline training and browser inference use the same contract.
+- A versioned preprocessing contract defines coordinate origin, scale, body-relative location, active interval, frame sampling or padding, missing landmarks, handedness, and sequence length. Offline training and browser inference use the same contract.
 - The preprocessing contract includes broad location features, such as near the face, chest, or neutral signing space and left/right or above/below body anchors, rather than requiring an exact physical distance.
+- Raw capture retains timestamps and every stable detailed hand result before normalization. The fixed model sequence is derived from the active signing interval; reducing model frames never changes the live overlay or raw capture cadence.
+- Contract v2 retains all 21 local hand landmarks in `x/y/z`, shoulder-relative wrist `x/y`, relative wrist-depth movement, and explicit presence. It removes tracker confidence from recognition input but keeps confidence in quality metadata.
+- Contract v2 uses nose, eyes, ears, mouth corners, shoulders, and elbows as upper-body anchors. Optional hips are removed. Body inputs use shoulder-normalized `x/y` and binary presence so both approved sources can supply comparable values.
+- Absolute wrist depth is not a model feature. Visible wrist depth is centered within the active interval so toward/away movement remains while camera-dependent depth offset is removed.
 - Sample dataset videos are reviewed with the extracted hand and body skeleton drawn over the original frames. This visual check verifies joint order, alignment, handedness, body anchors, and movement before extracted sequences are used for training.
 - Left/right normalization is evaluated per sign. The system does not assume that mirroring every sign preserves its meaning.
 
@@ -176,8 +193,9 @@ The conventions that keep the system lean: how files and code are organized, whe
 
 - Each module owns one responsibility: camera access, tracking, drawing, temporary landmark capture, recognition, or interface coordination.
 - Recognition consumes a project-defined landmark-sequence type, not MediaPipe objects, so training and browser inference share an explicit input contract.
-- The landmark contract uses canonical names rather than unexplained indexes: wrist; thumb CMC, MCP, IP, and tip; and MCP, PIP, DIP, and tip for the index, middle, ring, and pinky fingers. Selected body anchors are also named explicitly: nose, eyes, ears, mouth corners, shoulders, elbows, and optional hips. Derived face, neck, chest, shoulder, elbow/forearm, and neutral-space regions use broad proximity rather than claiming exact physical contact.
+- The landmark contract uses canonical names rather than unexplained indexes: wrist; thumb CMC, MCP, IP, and tip; and MCP, PIP, DIP, and tip for the index, middle, ring, and pinky fingers. Selected body anchors are also named explicitly: nose, eyes, ears, mouth corners, shoulders, and elbows. Derived face, neck, chest, shoulder, elbow/forearm, and neutral-space regions use broad proximity rather than claiming exact physical contact.
 - Landmark contract v1 is stored in `training/landmark-contract.v1.json`. It preserves hand orientation, normalizes hand shape to palm scale and body location to visible shoulder width, canonicalizes left-dominant signing into right-dominant coordinates, represents missing values explicitly, and resamples a reviewed sign interval to 64 frames. Facial-expression features are excluded from v1; vocabulary that depends on non-manual facial distinctions is not supported by the first model.
+- Provisional landmark contract v2 is stored separately in `training/landmark-contract.v2.json` until its temporal sample count passes the approved fidelity test. It is source-neutral and does not overwrite v1 evidence. No v2 model is trained or exported before the Developer approves the final count.
 - Mirroring is handled through one documented coordinate rule. Do not scatter left/right swaps or negative coordinates through feature code.
 - Failure states are represented in shared app state and rendered consistently, not inferred independently by several UI elements.
 - Model labels must come from the versioned supported-vocabulary file. The UI and model must not maintain competing label lists.
@@ -206,6 +224,8 @@ Consequential structural decisions, the alternatives considered, and why you cho
 | Use targeted local calibration and recalibration | Require full setup every visit or treat calibration as a model fix | Reduces normal camera/framing variation without blaming the User or claiming to solve recognition errors |
 | Support ASL only and separate sign IDs from English glosses | Treat glosses as universal translations or include unsourced sign languages | Matches the sourced datasets and avoids implying that sign languages or English meanings are interchangeable |
 | Build a small versioned Handshape catalog that references PopSign | Copy PopSign into a new database or claim an authoritative ASL dictionary | Gives the app and training tools one licensed metadata contract while preserving provenance and keeping media out of Git |
+| Use Standard and Reduced device modes | One lowest-common-denominator tracker or many hardware tiers | Preserves detailed hands, makes reduced body support explicit, and avoids multiplying untested configurations |
+| Revise preprocessing through a separate contract v2 | Keep incompatible v1 source features or overwrite historical evidence | Cross-source testing exposed reversed handedness, unequal clip intervals, and tracker-specific hip/visibility channels; a versioned contract keeps the correction reproducible |
 
 ### Provisional evaluation record
 

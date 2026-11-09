@@ -64,6 +64,15 @@ Record what informs your build decisions: the questions you investigated, useful
 - A de-identified landmark-only sheet confirms the handedness reflection and shows substantial interval/motion differences without copying source-video pixels. It is stored locally under the ignored source-audit artifacts and indexed in `evidence/image-history.md`.
 - **Recommendation pending Developer approval:** replace contract v1 with one source-neutral contract v2 before retraining. Apply explicit per-source handedness, trim a shared hand-presence/motion interval before resampling, remove optional hips, and retain only body/location coordinates and binary masks that both sources can supply comparably. Evaluate whether body/wrist `z` should be removed because the source tracker versions do not agree. Do not mix sources under contract v1 or add a second model architecture.
 
+### Nov 9 — Contract-v2 and temporal-density decision
+
+- The Developer approved a provisional source-neutral contract v2 and two explicit device modes. Standard mode prioritizes detailed hands and obtains upper-body anchors outside the critical hand path. Reduced mode keeps all 21 landmarks per hand but updates calibrated body anchors only occasionally; it cannot claim support for signs whose required inputs are unavailable.
+- V2 contains 167 features per frame: two 67-feature hand slots and eleven upper-body anchors with x/y/presence. It keeps local hand x/y/z and relative wrist-depth movement, removes optional hips and body z, and keeps continuous tracker confidence only as quality metadata.
+- A shared implementation passed a synthetic test for feature shape, dominant-hand canonicalization, active-interval selection, centered wrist depth, and 16/24/32/48 candidate tensors. Source adapter integration and the post-trim rerun remain pending.
+- A provisional fidelity test compared uniform nearest-frame candidates against all existing 64-frame evidence: 150 Google sequences and 55 corrected-handedness PopSign sequences. Thresholds required at least 85% median and 65% p10 motion retention per source plus no more than 5% p90 hand-presence coverage error.
+- Sixteen, 24, and 32 frames failed. On PopSign, 32 retained 79.1% median wrist-path motion and 70.8% local hand motion. Forty-eight was the only passing count on both sources: Google retained 100% median wrist/hand motion with 83.8%/79.7% p10; PopSign retained 89.6%/88.4% median and 77.0%/73.6% p10. Presence coverage p90 error was 2.1% Google and 1.6% PopSign.
+- **Recommendation pending Developer approval:** use 48 as the provisional v2 count, then rerun the fidelity check after v2 active-interval extraction before training. The tracker remains the measured device bottleneck, so reducing to 32 would discard hand motion without halving live tracking cost.
+
 ## Scope
 
 ### Stretch goals

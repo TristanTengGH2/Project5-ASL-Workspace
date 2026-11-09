@@ -1,0 +1,107 @@
+{
+  "contractVersion": 2,
+  "status": "provisional-temporal-count",
+  "tracker": {
+    "family": "MediaPipe landmarks with source-specific adapters",
+    "modelHashesRequiredForTrainingRun": true,
+    "confidencePolicy": "Keep tracker confidence in quality metadata; do not use continuous confidence as a recognition feature."
+  },
+  "coordinates": {
+    "sourceOrigin": "top-left",
+    "xDirection": "right",
+    "yDirection": "down",
+    "mirrorPolicy": "Apply one explicit source adapter before canonical dominance. PopSign uses keep based on the Nov 9 cross-source audit.",
+    "depthPolicy": "Keep local hand z. Center visible shoulder-normalized wrist z on its active-interval median so only relative toward/away movement remains."
+  },
+  "hands": {
+    "slots": ["dominant", "non-dominant"],
+    "dominanceNormalization": {
+      "selection": "The detected hand present in the most active-interval frames is dominant; ties keep the right hand as dominant.",
+      "canonicalSide": "right",
+      "leftDominantRule": "Reflect x coordinates, exchange paired upper-body anchors, and place the detected left hand in the dominant slot."
+    },
+    "landmarkOrder": [
+      "wrist",
+      "thumb CMC",
+      "thumb MCP",
+      "thumb IP",
+      "thumb tip",
+      "index MCP",
+      "index PIP",
+      "index DIP",
+      "index tip",
+      "middle MCP",
+      "middle PIP",
+      "middle DIP",
+      "middle tip",
+      "ring MCP",
+      "ring PIP",
+      "ring DIP",
+      "ring tip",
+      "pinky MCP",
+      "pinky PIP",
+      "pinky DIP",
+      "pinky tip"
+    ],
+    "shapeNormalization": {
+      "origin": "wrist",
+      "scale": "mean 2D distance from wrist to index MCP, middle MCP, and pinky MCP",
+      "rotation": "none; preserve palm and finger orientation",
+      "reason": "A 2D palm scale is comparable across tracker versions while local z still preserves relative hand depth."
+    },
+    "featuresPerSlot": {
+      "localLandmarksXyz": 63,
+      "bodyRelativeWristXy": 2,
+      "activeIntervalRelativeWristDepth": 1,
+      "present": 1,
+      "total": 67
+    }
+  },
+  "body": {
+    "anchorOrder": [
+      { "index": 0, "name": "nose" },
+      { "index": 2, "name": "left eye" },
+      { "index": 5, "name": "right eye" },
+      { "index": 7, "name": "left ear" },
+      { "index": 8, "name": "right ear" },
+      { "index": 9, "name": "left mouth corner" },
+      { "index": 10, "name": "right mouth corner" },
+      { "index": 11, "name": "left shoulder" },
+      { "index": 12, "name": "right shoulder" },
+      { "index": 13, "name": "left elbow" },
+      { "index": 14, "name": "right elbow" }
+    ],
+    "normalization": {
+      "origin": "shoulder midpoint",
+      "scale": "2D shoulder width",
+      "featuresPerAnchor": ["x", "y", "present"],
+      "missingRule": "Coordinates are zero only with present zero. Continuous visibility is quality metadata, not model input."
+    },
+    "excluded": [
+      "hips because availability differed from 100% in Google-adapted data to under 1% in PopSign",
+      "body z because tracker-version offsets were not source comparable"
+    ]
+  },
+  "sequence": {
+    "raw": "Retain increasing timestamps or source-frame indexes and every stable detailed hand result before normalization.",
+    "activeInterval": {
+      "rule": "Use the longest dominant-hand tracked run, bridge at most three missing source frames, and retain two source frames of context on each side.",
+      "browserRule": "A hands-free countdown begins capture after readiness so reaching for a control is outside the captured interval.",
+      "offlineCaveat": "Automatic trimming cannot always distinguish a tracked reach from the sign; ambiguous source clips remain review failures rather than silently trusted examples."
+    },
+    "candidateNormalizedFrameCounts": [16, 24, 32, 48],
+    "normalizedFrameCount": null,
+    "selectionRule": "Choose the smallest tested count that preserves detailed hand and wrist motion across both approved sources; Developer approval is required.",
+    "resampling": "Nearest observed source frame by timestamp or source-frame index across the active interval; do not interpolate across missing detections.",
+    "missingValues": "Use zero coordinates only together with an explicit zero presence value.",
+    "frameFeatureCount": 167,
+    "frameFeatureLayout": "dominant hand 67, non-dominant hand 67, then 11 upper-body anchors x 3",
+    "candidateTensorShapes": [[16, 167], [24, 167], [32, 167], [48, 167]]
+  },
+  "requirements": {
+    "handChannels": "Required for every supported sign and retained at full raw capture cadence.",
+    "bodyChannels": "Required only when catalog metadata says body-relative location is discriminative.",
+    "faceExpressionChannels": "Not included in v2; expression-dependent signs remain unsupported.",
+    "deviceModes": "Standard and Reduced modes may change body update cadence but never hand landmark count."
+  }
+}

@@ -235,6 +235,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - The ignored audit report and skeleton sheet are reproducible with `training/audit_feature_sources.py`. The sheet was visually inspected and shows the mirror correction plus substantial source interval/motion differences without source-video imagery.
 - **Developer decision gate:** approve or revise a source-neutral contract v2 before implementation. Recommended rules are explicit per-source handedness, shared active-interval trimming before 64-frame resampling, upper-body anchors without optional hips, comparable binary presence masks, and a decision on removing incompatible body/wrist `z`. Do not retrain until this contract is approved.
 
+### Nov 9 — Provisional contract v2 and limited-device modes
+
+- The Developer approved contract v2 with detailed raw hand capture, all 21 local hand landmarks in x/y/z, relative wrist-depth movement, upper-body x/y anchors without hips, binary presence, source-specific handedness, active-interval trimming, and tracker confidence retained only for scan quality.
+- The Developer also approved Standard and Reduced device modes. Both preserve detailed hands; Reduced mode lowers body update cadence and limits its supported signs rather than degrading finger landmarks silently.
+- Shared v2 feature construction passed a synthetic test and produces 167 features per frame. The contract remains provisional because the temporal count has not received final Developer approval and source adapters have not emitted v2 tensors yet.
+- A two-source v1-reference fidelity comparison rejected 16, 24, and 32 frames. Forty-eight was the only candidate meeting the provisional motion-retention and presence-coverage thresholds on both Google and PopSign.
+- **Developer decision gate:** approve 48 as the provisional v2 sequence count. After approval, integrate both source adapters, repeat fidelity on the trimmed v2 sequences, and stop again if 48 no longer passes. Do not retrain before this verification.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

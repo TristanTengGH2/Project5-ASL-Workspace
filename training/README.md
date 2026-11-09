@@ -24,6 +24,32 @@ extraction manifest. A comparison with the PopSign paper's 0.5 detection and
 0.1 tracking settings reduced average hand coverage in the three difficult
 `after` validation clips, so the tested 0.4 defaults remain in use.
 
+## Provisional landmark contract v2
+
+`landmark-contract.v2.json` records the approved source-neutral revision without
+overwriting v1 evidence. `landmark_contract_v2.py` implements its shared feature
+construction, canonical dominance, relative wrist depth, longest tracked active
+interval, and candidate resampling rules.
+
+V2 retains all 21 local hand landmarks in 3D, shoulder-relative wrist x/y,
+active-interval-relative wrist depth, and explicit presence. It removes model
+confidence, optional hips, and body z; upper-body anchors use x/y plus binary
+presence. The resulting frame has 167 features. A browser quality layer may
+still use tracker confidence, but recognition may not learn source-specific
+confidence values.
+
+The final frame count is not yet frozen. Compare 16, 24, 32, and 48 against the
+existing two-source motion evidence with:
+
+```sh
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/handshape-mpl \
+  .venv/bin/python training/evaluate_temporal_fidelity.py
+```
+
+This first comparison uses already normalized 64-frame v1 sequences as its
+reference. Repeat it after both source adapters emit v2 active intervals before
+training. No v2 model may be trained while `normalizedFrameCount` is null.
+
 ## Small PopSign downloads
 
 PopSign's per-sign archives can be several gigabytes. The sample downloader
