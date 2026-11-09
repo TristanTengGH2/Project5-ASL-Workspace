@@ -51,3 +51,12 @@ This file indexes visual revision evidence. Store original UI and performance sc
 - **Decision:** Accepted as good enough to proceed. Further delegate, resolution, and display-prediction experiments are deferred.
 - **Revision consequence:** Use direct camera-frame scheduling as the current tracking baseline and move to dataset/preprocessing feasibility. Keep rapid-motion preservation as an evaluation question.
 - **Related code:** Direct-scheduling checkpoint recorded with this entry.
+
+## 2026-11-09 — Cross-source skeleton comparison
+
+- **Image:** Local ignored artifact `training-artifacts/phase2-source-audit/skeleton-source-comparison.png`.
+- **Source:** Derived only from de-identified contract-v1 landmarks for the Google ISLR subset and existing PopSign sample; no source-video pixels are included or redistributed.
+- **Checkpoint:** Google/PopSign feature-distribution and handedness audit.
+- **Observed:** The PopSign `swap` row is reflected onto the opposite body side from Google. The controlled PopSign `keep` row aligns the canonical side. Representative source-frame counts and wrist paths also show substantial interval variation.
+- **Decision:** Evidence supports correcting PopSign handedness and replacing whole-clip contract-v1 resampling with an approved source-neutral contract before retraining.
+- **Revision consequence:** Keep the image local under dataset terms. Do not export the current model or enter Phase 3.

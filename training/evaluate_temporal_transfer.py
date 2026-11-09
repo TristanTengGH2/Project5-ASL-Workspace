@@ -18,7 +18,7 @@ from train_temporal_model import SequenceGRU, evaluate, load_examples
 
 DEFAULT_MODEL = Path("training-artifacts/google-five-sign-gru/gru-model.pt")
 DEFAULT_MANIFEST = Path(
-    "training-artifacts/phase2-five-sign-extraction-dominance/extraction-manifest.json"
+    "training-artifacts/phase2-five-sign-extraction-keep/extraction-manifest.json"
 )
 DEFAULT_OUTPUT = Path("training-artifacts/google-to-popsign-transfer.json")
 

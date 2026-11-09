@@ -52,12 +52,14 @@ python3 -m venv .venv
 cd app && npm run fetch-assets && cd ..
 MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
   datasets/popsign-v1-0/sample \
-  --handedness-mode swap
+  --handedness-mode keep
 ```
 
-`swap` corrects MediaPipe's selfie-mirror handedness convention for the
-unmirrored source frames. The option is required so a source convention is
-never assumed silently. Before training, review the ignored overlay images in
+`keep` is the verified PopSign source rule. A Nov 9 cross-source audit found
+that `swap` placed the canonical dominant wrist on the opposite side from the
+Google landmarks; `keep` aligned their shoulder-relative x direction. The
+option remains required so a source convention is never assumed silently.
+Before training, review the ignored overlay images in
 `training-artifacts/phase2-extraction/inspection/` and confirm the labels.
 
 The extractor records source, contract, and model hashes; decoded-frame counts;
@@ -103,7 +105,7 @@ python3 training/download_catalog_sample.py \
 
 MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
   datasets/popsign-v1-0/phase2-five-sign-large \
-  --handedness-mode swap \
+  --handedness-mode keep \
   --output training-artifacts/phase2-five-sign-large-extraction
 
 .venv/bin/python training/train_temporal_model.py
@@ -152,3 +154,16 @@ against the existing verified PopSign extraction without refitting it:
 
 This transfer result is diagnostic only. It must remain separate from the
 Google validation/test score and cannot be used to tune the model.
+
+Audit feature distributions and render de-identified skeleton timelines before
+changing preprocessing or running another model:
+
+```sh
+MPLBACKEND=Agg MPLCONFIGDIR=/tmp/handshape-mpl \
+  .venv/bin/python training/audit_feature_sources.py
+```
+
+The ignored `training-artifacts/phase2-source-audit/` output compares canonical
+wrist side, missing-hand rates, body availability, source-frame ranges, and
+standardized feature-group shifts. Its skeleton sheet contains landmarks only,
+not source-video frames.

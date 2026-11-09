@@ -226,6 +226,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - The exact frozen Google-trained model scored 18.2% on all 55 existing PopSign clips: 13.3% official test, 16.0% train, and 26.7% validation. It predicted `pen` for 41/55 clips, demonstrating severe source/preprocessing shift. This diagnostic did not refit the model or tune a threshold on PopSign.
 - **Developer decision gate:** Phase 2 remains open. Stop before another model run and review the data adapter, source compatibility, training quantity, and vocabulary. Do not enter Phase 3 or add another architecture based on this result.
 
+### Nov 9 — Cross-source preprocessing audit
+
+- The Developer approved a no-retraining diagnostic comparing Google and PopSign contract-v1 features and de-identified skeleton timelines.
+- PopSign's previous `swap` handedness mode inverted the canonical signing side: dominant wrist `x` averaged `+0.568` versus Google's `-0.529`. The controlled `keep` re-extraction averaged `-0.568` and raised frozen-model transfer accuracy from 18.2% to 25.5%, confirming the correction but not solving recognition.
+- The corrected transfer still predicted `pen` for 45/55 clips. Source-frame medians differ by 2.42x (Google 26.5, PopSign 64), and the current whole-clip resampling includes a 755-frame PopSign outlier instead of a bounded signing interval.
+- Optional body inputs are not source-equivalent: Google has no pose visibility values, so the adapter marks finite hip coordinates present in every frame; PopSign hips pass the visibility threshold in under 1% of frames. Body `z` and visibility distributions also differ across tracker versions.
+- The ignored audit report and skeleton sheet are reproducible with `training/audit_feature_sources.py`. The sheet was visually inspected and shows the mirror correction plus substantial source interval/motion differences without source-video imagery.
+- **Developer decision gate:** approve or revise a source-neutral contract v2 before implementation. Recommended rules are explicit per-source handedness, shared active-interval trimming before 64-frame resampling, upper-body anchors without optional hips, comparable binary presence masks, and a decision on removing incompatible body/wrist `z`. Do not retrain until this contract is approved.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
