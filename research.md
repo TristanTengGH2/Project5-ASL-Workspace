@@ -44,6 +44,15 @@ Record what informs your build decisions: the questions you investigated, useful
 - Validation-only vocabulary reduction selected `hear` plus `puppy` for one-nearest-neighbor; it scored 5/6 on validation and 5/6 on test. This post-reduction two-class result is useful diagnostic evidence, not enough classes or examples for product integration. No model is exported.
 - Decision required: either approve a larger per-class sample and one small temporal model, or reduce the first supported vocabulary to a deliberately tiny proof. Phase 3 browser integration remains blocked until the Developer sets the acceptable feasibility target.
 
+### Nov 9 — Larger temporal-model checkpoint blocked by source TLS
+
+- The Developer approved expanding to 20 training and five validation/test clips per sign, then evaluating one compact temporal model against a 70% held-out top-1 target.
+- The official PopSign archive host rejected verified TLS connections. Its certificate is issued to `signdata.cc.gatech.edu` by the InCommon intermediate CA, has SHA-256 fingerprint `43:F9:B6:62:06:F6:49:40:20:BA:F7:BD:4A:EE:26:78:E4:16:AA:9D:82:46:C3:37:A4:12:C7:DA:6B:2F:F0:DE`, and expired Nov 8, 2026 at 19:54:03 UTC. The certificate contains no alternate hostname. Certificate verification was not disabled.
+- A discovered [Hugging Face derivative](https://huggingface.co/datasets/sign/popsign-images) was rejected for this checkpoint: it is a third-party 90.8 GB image-frame release sampled at 5 FPS, so it would change provenance, input timing, and the shared browser/offline preprocessing contract. The separate [Kaggle landmark competition release](https://www.kaggle.com/competitions/asl-signs/data) is about 40 GB and also uses a different extraction contract.
+- PyTorch 2.8.0 and a deterministic one-layer bidirectional GRU training pipeline were added locally. It uses validation-only early stopping, evaluates test once after restoring the best validation checkpoint, records confusion and synthetic negative behavior, and permits browser export only if both accuracy and unknown-rejection gates pass.
+- A tooling smoke test on the existing 25 training clips ran for 50 epochs, restored epoch 15, reached 20.0% validation top-1 and 6.7% test top-1, and did not export. This is not the approved larger experiment and confirms that the small sample is insufficient; it must not be presented as the temporal-model decision result.
+- Decision: wait for verified TLS on the official archive host, then resume the documented 150-clip download, extraction, and single-GRU run. Do not bypass certificate verification, substitute derivative data silently, add a second architecture, or begin Phase 3.
+
 ## Scope
 
 ### Stretch goals

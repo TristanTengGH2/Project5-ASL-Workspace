@@ -200,6 +200,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - Validation-only reduction found `hear`/`puppy` as the strongest nearest-neighbor pair at 5/6 validation and 5/6 test. This is too narrow and too small to justify browser integration or a supported-vocabulary claim.
 - **Developer decision gate:** set the minimum feasibility target and choose between (a) expanding the local sample and testing one small temporal model, or (b) accepting a deliberately tiny proof vocabulary. Do not enter Phase 3 until this choice is approved.
 
+### Nov 9 — Larger sample and GRU checkpoint
+
+- The Developer approved 20 training and five validation/test clips per sign, one compact bidirectional GRU, and a minimum 70% held-out top-1 target across all five signs.
+- The 150-clip download is blocked because the official Georgia Tech archive certificate expired Nov 8. Verified clients reject it, and no official valid alternate hostname was found. Certificate verification remains enabled.
+- The deterministic GRU pipeline is ready and records configuration, seed, contract hash, early-stopping history, validation/test confusion, synthetic negative behavior, model size, and export-gate status.
+- A smoke run on the old 25-training-clip sample scored 20.0% validation and 6.7% test top-1. It verifies that the training command runs but is not the approved result and is not exported.
+- **Phase 2 remains blocked, not failed:** resume the exact documented commands when the official TLS certificate is renewed. If the larger single-GRU run misses 70%, stop and review data, preprocessing, and vocabulary rather than adding another model.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

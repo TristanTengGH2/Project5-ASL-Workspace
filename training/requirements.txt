@@ -1,3 +1,4 @@
 mediapipe==1.2.2
 numpy==2.0.2
 opencv-contrib-python==5.0.0.93
+torch==2.8.0

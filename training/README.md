@@ -88,3 +88,29 @@ validation only and then reported once on test. Synthetic missing-tracking
 inputs document behavior before unknown-sign rejection exists. A two-class or
 otherwise incomplete run must remain labeled as a smoke test and must not be
 exported to the browser.
+
+## Temporal model checkpoint
+
+The approved larger checkpoint uses 20 training and five validation/test clips
+per sign, then trains one compact bidirectional GRU. Validation controls early
+stopping; the test split is evaluated only after the best validation checkpoint
+is restored.
+
+```sh
+python3 training/download_catalog_sample.py \
+  --train 20 --val 5 --test 5 \
+  --output datasets/popsign-v1-0/phase2-five-sign-large
+
+MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
+  datasets/popsign-v1-0/phase2-five-sign-large \
+  --handedness-mode swap \
+  --output training-artifacts/phase2-five-sign-large-extraction
+
+.venv/bin/python training/train_temporal_model.py
+```
+
+The checkpoint target is at least 70% top-1 accuracy on the official held-out
+test signers across all five signs. Accuracy alone does not authorize browser
+export: unknown-input rejection must also pass. If this single temporal model
+misses the target, stop and review the data, preprocessing, and vocabulary
+instead of adding another architecture.
