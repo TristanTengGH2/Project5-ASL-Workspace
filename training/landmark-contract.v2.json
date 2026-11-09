@@ -85,9 +85,9 @@
   "sequence": {
     "raw": "Retain increasing timestamps or source-frame indexes and every stable detailed hand result before normalization.",
     "activeInterval": {
-      "rule": "Use the longest dominant-hand tracked run, bridge at most three missing source frames, and retain two source frames of context on each side.",
+      "rule": "Form dominant-hand candidate runs by bridging at most three missing source frames. Prefer the run with the strongest combination of observed detections and detection density; use wrist motion only to break otherwise similar candidates. Retain two source frames of preparation/ending context on each side.",
       "browserRule": "A hands-free countdown begins capture after readiness so reaching for a control is outside the captured interval.",
-      "offlineCaveat": "Automatic trimming cannot always distinguish a tracked reach from the sign; ambiguous source clips remain review failures rather than silently trusted examples."
+      "offlineCaveat": "Automatic trimming cannot always distinguish a tracked reach, false detection, or preparation from the sign. Ambiguous extracted intervals remain review failures, but a failed interval does not automatically invalidate its source clip."
     },
     "candidateNormalizedFrameCounts": [16, 24, 32, 48],
     "normalizedFrameCount": 48,

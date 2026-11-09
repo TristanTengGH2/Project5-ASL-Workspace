@@ -185,8 +185,8 @@ def main() -> int:
         "sources": summaries,
         "recommendedCount": recommendation,
         "limitation": (
-            "The automatic longest-tracked-run interval cannot always distinguish a tracked "
-            "reach from a sign; ambiguous clips still require visual review."
+            "The automatic sustained-run interval cannot always distinguish preparation or a "
+            "tracked reach from a sign; ambiguous extracted intervals still require review."
         ),
     }
     args.output.mkdir(parents=True, exist_ok=True)

@@ -248,6 +248,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - The Developer kept continuous ASL-to-English transcription, including slang-aware open-vocabulary transcription, outside the five-week scope. It may be researched only if the isolated-sign product is completed early. A future timestamped isolated-attempt list must be called a recognition log, not a transcript.
 - **Developer decision gate:** revise the active-interval selector to prefer a dense sustained run, preserve a short preparation lead-in, regenerate the v2 intervals, and repeat the 48-frame fidelity test before retraining. Do not discard the valid `after` source clip, retrain, or enter Phase 3 yet.
 
+### Nov 9 — Sustained-run interval selector
+
+- The active-interval selector now chooses the candidate dominant-hand run with the strongest combination of detected frames and detection density, breaks near-ties with wrist motion, and keeps two source frames of context. Three unit tests (`training/test_landmark_contract_v2.py`) pass, including the `after` pattern of an intermittent false run beside a dense real run.
+- Both adapters were re-run into new local directories without overwriting the previous evidence: 150 signer-separated Google sequences and the 55 existing PopSign clips. Only one PopSign clip changed interval: the `after` clip from signer 8037 moved from 0.00–0.67 s (the false face detections) to 0.87–1.60 s. The regenerated review sheet shows the raised, moving hand across that span. Five of 150 Google intervals also changed.
+- The 48-frame fidelity test was repeated. Google passes at 32 and 48 frames. PopSign passes only at 48, where the p10 wrist and local-hand motion retention is 100% (it was 83.4% and 78.7% under the old selector). The provisional 48-frame choice stands; 16, 24 and, for PopSign, 32 frames remain rejected.
+- New dominant-hand detection rate inside each interval: PopSign median 0.89, minimum 0.50 (one clip under 0.60); Google median 0.80, minimum 0.33 (27 of 150 under 0.60). Sparse detection inside the chosen interval is not yet reviewed or filtered.
+- No model was trained or exported, and Phase 3 has not started. Ignored outputs are in `training-artifacts/*-v2b-*`.
+- **Developer decision gate:** decide whether to retrain the single approved GRU on the regenerated v2 tensors, and whether to filter or flag intervals with low dominant-hand detection first. Do not retrain until approved.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

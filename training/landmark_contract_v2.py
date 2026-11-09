@@ -158,10 +158,25 @@ def active_interval(
     changes = np.diff(padded)
     starts = np.flatnonzero(changes == 1)
     ends = np.flatnonzero(changes == -1)
-    lengths = ends - starts
-    longest = int(np.argmax(lengths))
-    start = max(0, int(starts[longest]) - context)
-    end = min(len(canonical), int(ends[longest]) + context)
+    candidates = []
+    for start, end in zip(starts, ends):
+        span = int(end - start)
+        detections = int(np.count_nonzero(present[start:end]))
+        density = detections / span
+        sustained_score = detections * density
+        wrist = canonical[start:end, 63:65]
+        detected_wrist = wrist[present[start:end]]
+        wrist_motion = (
+            float(np.linalg.norm(np.diff(detected_wrist, axis=0), axis=1).sum())
+            if len(detected_wrist) > 1
+            else 0.0
+        )
+        candidates.append(
+            (sustained_score, detections, density, wrist_motion, span, -int(start))
+        )
+    selected = max(range(len(candidates)), key=candidates.__getitem__)
+    start = max(0, int(starts[selected]) - context)
+    end = min(len(canonical), int(ends[selected]) + context)
     return start, end
 
 

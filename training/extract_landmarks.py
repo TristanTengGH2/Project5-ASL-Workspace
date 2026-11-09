@@ -432,6 +432,7 @@ def extract_video_v2(
         "activeFrames": len(prepared.features),
         "activeStartMs": float(prepared.source_positions[0]),
         "activeEndMs": float(prepared.source_positions[-1]),
+        "activeDominantHandDetectionRate": float(np.mean(prepared.features[:, 66] > 0)),
         "fps": fps,
         "handDetectionFrames": hand_frames,
         "handDetectionRate": hand_frames / len(frames),

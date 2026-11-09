@@ -379,6 +379,7 @@ def convert_sequence_v2(path: Path, contract: dict, tensor_path: Path) -> dict:
         "activeFrames": len(prepared.features),
         "activeSourceStart": float(prepared.source_positions[0]),
         "activeSourceEnd": float(prepared.source_positions[-1]),
+        "activeDominantHandDetectionRate": float(np.mean(prepared.features[:, 66] > 0)),
         "handDetectionFrames": hand_frames,
         "handDetectionRate": hand_frames / len(frames),
         "bodyAnchorFrames": body_frames,

@@ -28,8 +28,12 @@ extraction manifest. A comparison with the PopSign paper's 0.5 detection and
 
 `landmark-contract.v2.json` records the approved source-neutral revision without
 overwriting v1 evidence. `landmark_contract_v2.py` implements its shared feature
-construction, canonical dominance, relative wrist depth, longest tracked active
-interval, and candidate resampling rules.
+construction, canonical dominance, relative wrist depth, sustained-run active
+interval, and candidate resampling rules. The interval selector prefers the
+candidate run with the most detected dominant-hand frames and the highest
+detection density, uses wrist motion only to break ties, and keeps two source
+frames of context on each side. Run `python3 -m unittest test_landmark_contract_v2`
+from `training/` to check it.
 
 V2 retains all 21 local hand landmarks in 3D, shoulder-relative wrist x/y,
 active-interval-relative wrist depth, and explicit presence. It removes model
