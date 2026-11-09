@@ -208,6 +208,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - A smoke run on the old 25-training-clip sample scored 20.0% validation and 6.7% test top-1. It verifies that the training command runs but is not the approved result and is not exported.
 - **Phase 2 remains blocked, not failed:** resume the exact documented commands when the official TLS certificate is renewed. If the larger single-GRU run misses 70%, stop and review data, preprocessing, and vocabulary rather than adding another model.
 
+### Nov 9 — Approved temporary dataset bridge
+
+- The Developer approved using Google's Isolated Sign Language Recognition landmark corpus to continue Phase 2 while verified PopSign downloads are unavailable.
+- Keep the same five signs and `20 train / 5 validation / 5 test` examples per sign. Split by participant before selecting examples; never allow one participant into multiple splits.
+- Adapt the published MediaPipe Holistic landmark sequences to contract v1 and record the unavailable timestamps/confidence values and tracker-version difference. This result validates the temporal pipeline but does not replace the official PopSign benchmark.
+- Use the existing securely downloaded 55 PopSign clips only as a later cross-dataset check. Do not bypass the expired TLS certificate to obtain more files.
+- **Pass evidence:** 150 selected sequences, disjoint participant lists, exact tensor/split counts, one deterministic GRU result, and a separately labeled PopSign transfer result. Remain in Phase 2 until the Developer reviews these results.
+- Importer implementation verification passed on a synthetic parquet sequence: it produced a finite `64 x 188` tensor, selected exactly 150 examples, and kept all 21 synthetic participant IDs disjoint across splits. The first real metadata request stopped before downloading because this Mac has no local Kaggle authentication file. The Developer must accept the competition rules and configure Kaggle locally; credentials must not be committed or pasted into project files.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

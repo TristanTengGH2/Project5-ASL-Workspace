@@ -64,7 +64,11 @@ def split_and_label(video_path: str) -> tuple[str, str]:
 def load_examples(manifest: dict) -> list[dict]:
     examples = []
     for item in manifest["videos"]:
-        split, label = split_and_label(item["video"])
+        split, label = (
+            (item["split"], item["label"])
+            if "split" in item and "label" in item
+            else split_and_label(item["video"])
+        )
         with np.load(item["tensor"]) as archive:
             features = archive["features"].astype(np.float32)
         examples.append(
@@ -308,6 +312,7 @@ def main() -> int:
         "seed": args.seed,
         "contractVersion": manifest["contractVersion"],
         "contractSha256": manifest["contractSha256"],
+        "sourceDataset": manifest.get("sourceDataset", {"name": "PopSign ASL v1.0"}),
         "splitCounts": split_counts,
         "configuration": {
             "hiddenSize": args.hidden_size,

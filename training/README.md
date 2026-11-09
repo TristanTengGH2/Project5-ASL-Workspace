@@ -114,3 +114,31 @@ test signers across all five signs. Accuracy alone does not authorize browser
 export: unknown-input rejection must also pass. If this single temporal model
 misses the target, stop and review the data, preprocessing, and vocabulary
 instead of adding another architecture.
+
+## Temporary Google-landmark bridge
+
+If the official PopSign video server is unavailable, the Google Isolated Sign
+Language Recognition corpus can validate the same five-sign temporal pipeline.
+It contains MediaPipe Holistic landmark sequences rather than source videos.
+The importer keeps participants disjoint across train, validation, and test,
+downloads only 150 selected sequences, and adapts them to the `64 x 188` input
+shape. This bridge does not replace the final PopSign evaluation.
+
+First accept the `asl-signs` competition rules on Kaggle and configure local
+Kaggle authentication. Do not put a token or credentials in this repository.
+Then run:
+
+```sh
+.venv/bin/pip install -r training/requirements.txt
+.venv/bin/python training/import_google_landmarks.py
+.venv/bin/python training/train_temporal_model.py \
+  --manifest training-artifacts/google-five-sign-extraction/extraction-manifest.json \
+  --output training-artifacts/google-five-sign-gru
+```
+
+The adapter records three source limitations in its manifest: timestamps are
+not published, landmark confidence values are unavailable, and the source uses
+MediaPipe 0.9.0.1 rather than the current browser tracker. Results must be
+labeled as a pipeline-validation benchmark. The already verified 55 PopSign
+clips remain a separate cross-dataset check; never disable TLS verification to
+retrieve additional PopSign files.
