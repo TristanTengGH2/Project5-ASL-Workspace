@@ -315,6 +315,17 @@ Record what you tested and what happened. For peer testing, note what people did
 - No model change was made, and no test-split decision was affected.
 - **Developer decision gate:** (a) confirm with an ASL source whether `puppy` is a compound or is signed below the typical webcam frame; (b) revise or replace the vocabulary entry if it cannot be tracked reliably, as the plan prescribes; (c) separately test a trimming rule that keeps several dense runs for multi-phase signs, evaluated on validation only.
 
+### Nov 9 — Letter datasets inspected for fingerspelling feasibility
+
+- The Developer chose letter-by-letter fingerspelling (an explicit Fingerspell mode, one held letter at a time) and delegated the dataset inspection, with the condition that a dataset is acceptable only if it performs well and otherwise the next data source is used.
+- Downloaded two CC BY 4.0 Mendeley archives into the Git-ignored `datasets/fingerspelling/`: SignAlphaSet (445 MB) and the Cabana ASL Alphabet Dataset (935 MB). Both matched their published size and SHA-256. Neither archive contained unsafe paths, and the bundled scripts were not run.
+- SignAlphaSet: 26,000 images, exactly 1,000 per letter A-Z, J and Z present as static poses, 296x296, close-up hands on a dark cloth. Sampled consecutive files are near duplicates, and a wristband repeats across letters, so a handful of signers is likely; there are no signer IDs.
+- Cabana: 24 letters (no J or Z); about 88,000 Train images from only 1 to 5 source videos per letter, plus a 720-image Test set (30 per letter) with different filenames and visibly different backgrounds. Signers are not stated.
+- Hand-tracker check with the browser's Hand Landmarker model in image mode (`training/measure_letter_detection.py`): a hand was found in 99.3% of 1,040 sampled SignAlphaSet images, 95.0% of 480 Cabana Train images, and 95.1% of all 720 Cabana Test images. Weakest letters were `O` in all three samples, and `I` and `P` in Cabana Test. This confirms landmarks can be extracted; it says nothing about classification accuracy.
+- Limits found: neither dataset provides signer IDs, so a signer-separated split is not possible; both lack real motion for J and Z (Cabana omits them); the images are close-ups, not the waist-up webcam view the app will see.
+- Proposed next check, not yet run: extract landmarks from both sets, train one small landmark classifier on one dataset, and test on the other dataset and on Cabana Test. A different dataset gives different people and settings, which is a stricter test than a random split. Results would be labeled as not signer-separated within a dataset.
+- **Developer decision gate:** approve that cross-dataset feasibility check, or move to FSboard or a self-collected letter set.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
