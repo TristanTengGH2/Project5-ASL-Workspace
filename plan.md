@@ -21,7 +21,7 @@ The current plan for each phase, starting from the map in your pitch. Update it 
 | Phase | Target result | Scope control |
 |---|---|---|
 | Phase 1 — Ideate and pitch, through Nov 2 | Approved pitch, working title and logo direction, documented sources | Studio approval reported by the Developer on Nov 2; approved pitch remains frozen |
-| Phase 2 — Prove the core, Nov 2–9 | Real-camera tracking baseline, feasible PopSign subset, first held-out-signer model result | Prove tracking and recognition before expanding the interface |
+| Phase 2 — Prove the core, Nov 2–9 | Real-camera tracking baseline, feasible PopSign subset, first held-out-signer model result | Prove tracking and recognition before expanding the interface. **Status Nov 9: complete as a working prototype; see the Phase 2 summary in Testing and evidence** |
 | Phase 3 — Revise and integrate, Nov 9–16 | Temporary landmark capture and real ranked results in the browser | Reduce or revise vocabulary if model accuracy is inadequate |
 | Phase 4 — Build and test, Nov 16–30 | Unknown handling, lookup references/filters, accessibility, GitHub Pages build, peer-review version | Learn mode begins only if the primary lookup loop is stable |
 | Phase 5 — Finish and showcase, Nov 30–Dec 7 | Peer-review revisions, public deployment, final evaluation, breakdown and debrief | Fix and simplify before adding stretch work |
@@ -325,6 +325,14 @@ Record what you tested and what happened. For peer testing, note what people did
 - Limits found: neither dataset provides signer IDs, so a signer-separated split is not possible; both lack real motion for J and Z (Cabana omits them); the images are close-ups, not the waist-up webcam view the app will see.
 - Proposed next check, not yet run: extract landmarks from both sets, train one small landmark classifier on one dataset, and test on the other dataset and on Cabana Test. A different dataset gives different people and settings, which is a stricter test than a random split. Results would be labeled as not signer-separated within a dataset.
 - **Developer decision gate:** approve that cross-dataset feasibility check, or move to FSboard or a self-collected letter set.
+
+### Nov 9 — Phase 2 summary: a working prototype, still being improved
+
+- **Status:** Phase 2 is complete as a working prototype. The three targets exist: a real-camera tracking baseline, a five-sign feasible subset, and a held-out-signer recognition result that cleared the 70% gate. The model is a known working offline model, not a finished one: it is a prototype.
+- **What works:** hand tracking runs on the Developer's camera; landmark sequences are extracted under a versioned contract; the single approved GRU recognizes five signs (`after`, `hear`, `man`, `pen`, `puppy`) at **74.0%** top-1 on 100 clips from four held-out participants, and 65.5% on the 55 real PopSign clips in a separate frozen-model check.
+- **What it does not yet do:** it is about three-in-four correct on those signs, not perfect; the 74% estimate is imprecise (roughly 65% to 82%); it was trained on the Google landmark bridge dataset, not the official PopSign set; it has not been tested live in a browser; and it cannot yet tell an unsupported sign from a supported one.
+- **Being improved (carried into the next phase):** (1) unknown handling: confidence scores separated supported from unsupported signs poorly (AUROC about 0.64), so the product defaults to "not sure" and shows candidates as possible matches; whether the browser phase may start on that approach is a Developer decision on the Phase 3 gate, not yet made; (2) data: the official PopSign download is still blocked by an expired certificate, and more signers would help most; (3) vocabulary: `puppy` has two signed forms and tracks poorly, so it is excluded from the first real vocabulary, which should grow toward 20 to 30 signs in measured stages; (4) fingerspelling letter recognition was added to scope by the Developer; its data feasibility check is still in progress.
+- Evidence for each item is in the dated entries above.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
