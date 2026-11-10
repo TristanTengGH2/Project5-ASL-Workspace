@@ -280,6 +280,12 @@ Record what you tested and what happened. For peer testing, note what people did
 - **Developer decision gate:** the accuracy gate passed on a bridge dataset with a wide interval, and unknown rejection is missing. Decide whether to accept this as the Phase 2 feasibility result, and choose the next step: (a) implement and test unknown-input rejection on this model, (b) investigate why `puppy` fails, or (c) widen the vocabulary in stages. Do not enter Phase 3 or export a browser model until this is approved.
 - **Developer response (Nov 9):** accepted the 74.0% held-out result as the Phase 2 feasibility result, with the caveats above (bridge dataset, imprecise estimate, weak `puppy`, no unknown rejection). Export and Phase 3 still wait on unknown-input rejection.
 
+### Nov 9 — Unknown-input rejection: approach approved, negatives selected
+
+- The Developer approved the proposed rule: reject a scan when the model's top probability falls below a threshold. The threshold is fitted on the four validation participants (real signs plus unsupported-sign negatives) and evaluated once on the four test participants. The Developer sets the acceptable trade-off after seeing the validation curve and before any test evaluation.
+- The unsupported-sign negatives were chosen without looking at any model output: 20 signs sampled with seed 20261109 from the 245 corpus signs outside the five-sign vocabulary, each with at least 10 validation and 10 test clips from the same held-out participants: `all`, `bad`, `blow`, `car`, `child`, `closet`, `cloud`, `cut`, `dad`, `farm`, `glasswindow`, `haveto`, `hungry`, `jump`, `kiss`, `open`, `tiger`, `tree`, `underwear`, `yourself`.
+- Not started: downloading the negatives (about 10 validation and 10 test clips per sign) and computing the validation curve. Synthetic idle and missing-hand inputs and real webcam negatives remain separate checks.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
