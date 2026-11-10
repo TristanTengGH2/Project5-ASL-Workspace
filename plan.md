@@ -286,6 +286,17 @@ Record what you tested and what happened. For peer testing, note what people did
 - The unsupported-sign negatives were chosen without looking at any model output: 20 signs sampled with seed 20261109 from the 245 corpus signs outside the five-sign vocabulary, each with at least 10 validation and 10 test clips from the same held-out participants: `all`, `bad`, `blow`, `car`, `child`, `closet`, `cloud`, `cut`, `dad`, `farm`, `glasswindow`, `haveto`, `hungry`, `jump`, `kiss`, `open`, `tiger`, `tree`, `underwear`, `yourself`.
 - Not started: downloading the negatives (about 10 validation and 10 test clips per sign) and computing the validation curve. Synthetic idle and missing-hand inputs and real webcam negatives remain separate checks.
 
+### Nov 9 — Unknown-rejection validation curve (test participants untouched)
+
+- Downloaded the 20 unsupported-sign negatives selected earlier: 200 validation and 200 test clips from the same held-out participants as the five-sign sets, none from training participants; all tensors finite `48 x 167`. The import hit read timeouts twice (file 110 and file 143 of 420) and completed on a third run that reused the cached files. Only the validation split was evaluated.
+- Rule: accept a scan when the top softmax probability is at least the threshold. `training/evaluate_unknown_rejection.py` has a validation stage and a test stage; the test stage requires an explicit `--threshold`.
+- On the validation participants (100 real-sign clips, 200 unsupported-sign clips; real-sign top-1 70.0%) the top probability separates the two groups poorly: AUROC **0.640** (0.5 is chance). Median top probability was 0.84 for real signs and 0.71 for unsupported signs.
+- Trade-off at selected thresholds (real signs kept / unsupported signs rejected): 0.50 → 90% / 16%; 0.70 → 68% / 49.5%; 0.80 → 61% / 62.5%; 0.90 → 42% / 82%; 0.95 → 34% / 89%. Rejecting at least 80% of unsupported signs needs threshold 0.90 and discards 58% of real signs.
+- Unsupported signs were most often labeled `after` (65 of 200), then `puppy` (47), `man` (37), `pen` (34), and `hear` (17).
+- Synthetic idle and missing-hand inputs were all labeled `after`, with confidence 0.54 (all-zero idle), 0.74 (hands missing, pose only), and 0.97 (alternating hand loss). A threshold would not reliably reject these either.
+- No test-split rejection result exists, and no model was exported.
+- **Developer decision gate:** a plain confidence threshold is a weak unknown detector for this model. Options: (a) accept a threshold anyway and state the trade-off; (b) test another score such as top-1/top-2 margin on validation only; (c) train an explicit "unknown" class from other signs' training-participant clips (a model change that needs approval); (d) use no hard rejection and show ranked candidates with a visible low-confidence warning, as lookup does. Do not run the test stage until a rule and threshold are chosen.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
