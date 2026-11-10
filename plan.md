@@ -346,6 +346,22 @@ Record what you tested and what happened. For peer testing, note what people did
 - No J or Z; no model exported; nothing in the browser.
 - **Developer decision gate:** (a) one declared improvement attempt on these datasets (for example rotation normalization and training on both sets, evaluated by leaving one dataset out); (b) move to FSboard letter segments; (c) collect a small signer-labeled letter set.
 
+### Nov 9 — Letter classifier: declared feature variants
+
+- The Developer approved one declared improvement attempt. The proposal to train on both datasets and leave one out was dropped because two datasets leave nothing unseen. Two variants were fixed before running and evaluated on the same three experiments (`training/evaluate_letter_transfer.py --variant ...`): `rotaug` adds random in-plane rotation (+/-25 degrees) to the training copies; `invariant` uses 210 pairwise landmark distances plus the unit direction of the wrist-to-middle-finger-base axis. Mirrored training copies, settings, seed, and samples are unchanged. The baseline reproduced its earlier numbers exactly.
+- Top-1 (top-3 in brackets), 24 letters, chance 4.2%:
+
+| Experiment | baseline | rotaug | invariant |
+|---|---|---|---|
+| Train Cabana, test SignAlphaSet | 68.3% (84.9%) | 68.9% (79.6%) | **71.8%** (81.9%) |
+| Train SignAlphaSet, test Cabana Test | 49.3% (73.8%) | 51.8% (72.8%) | **62.2%** (79.9%) |
+| Train Cabana, test Cabana Test (not signer-separated) | 86.7% (95.0%) | 89.0% (98.1%) | 92.8% (99.3%) |
+
+- Rotation augmentation changed little (+0.6 and +2.5 points cross-dataset). The invariant features helped most: +3.5 and +12.9 points cross-dataset. Neither reaches a good level: 72% and 62% top-1, with several letters still near 0% in cross-dataset tests (`D`, `G`, `X`, `M`, `H`; `O` in one direction).
+- Caveats: three variants were evaluated on the same test sets, so choosing `invariant` carries selection bias; there are only two datasets and signer identity is unknown; the same letters fail in both directions and under every variant. That pattern is consistent with the two datasets showing different handshapes or labeling conventions for those letters, which has not been checked (a within-dataset check shows `G` is not weak inside Cabana).
+- No J or Z; nothing exported; nothing in the browser.
+- **Developer decision gate:** (a) visually compare `G`, `M`, `X`, `D` samples between the two datasets to test the label-convention explanation; (b) FSboard letter segments; (c) a small self-collected, signer-labeled letter set. Do not tune further against these test sets without recording it as exploratory.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
