@@ -306,6 +306,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - `train_temporal_model.py` now also stores each synthetic negative's full probability vector (additive).
 - **Developer decision gate:** remaining options are (c) train an explicit "unknown" class from other signs' training-participant clips, evaluated on unsupported signs that were not used in training, which is a model change needing approval; or (d) no hard rejection, showing ranked candidates with a visible low-confidence warning. Do not run the test stage until a rule is chosen.
 
+### Nov 9 — `puppy` diagnosis: what the tracker found in the 20 held-out clips
+
+- The Developer suspected longer sequences. The data points the other way: the 14 clips `puppy` got wrong are shorter and sparser than the 6 it got right (median trimmed interval 6 frames vs 17.5; median detected hand-frames 5 vs 22; median dominant-hand rate inside the interval 0.63 vs 0.80). The longest clips include several right answers.
+- `training/render_tracked_sequences.py` renders a detection timeline and middle-frame skeletons for one sign's held-out clips (landmark points only, written to the Git-ignored `training-artifacts/tracked-sequences/`). In all 20 `puppy` clips only a right hand was ever found; no left hand appears. Hands, when found, sit low and near the left edge of the frame, close to the shoulders. Six of the 14 wrong clips have no hand at all at the middle of the kept interval, and three wrong clips have only 3 to 4 tracked frames. Two of the six right clips are also nearly empty, so the model answered correctly from almost no evidence.
+- The Developer's hypothesis is that `puppy` is a compound of BABY and DOG. The landmarks cannot confirm or reject that: several long clips show separate bursts of detection, which would fit two phases, but a compound sign's linguistic structure needs an ASL source. Unverified. If it is a compound with a low or two-handed component, the tracker may be missing much of it.
+- Trimming discarded at least a quarter of the detected hand-frames in 9 of 14 wrong `puppy` clips against 3 of 6 right ones, and in 4 of 4 wrong `pen` clips against 5 of 16 right ones. Samples are small; this is suggestive only.
+- No model change was made, and no test-split decision was affected.
+- **Developer decision gate:** (a) confirm with an ASL source whether `puppy` is a compound or is signed below the typical webcam frame; (b) revise or replace the vocabulary entry if it cannot be tracked reliably, as the plan prescribes; (c) separately test a trimming rule that keeps several dense runs for multi-phase signs, evaluated on validation only.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
