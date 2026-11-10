@@ -334,6 +334,18 @@ Record what you tested and what happened. For peer testing, note what people did
 - **Being improved (carried into the next phase):** (1) unknown handling: confidence scores separated supported from unsupported signs poorly (AUROC about 0.64), so the product defaults to "not sure" and shows candidates as possible matches; whether the browser phase may start on that approach is a Developer decision on the Phase 3 gate, not yet made; (2) data: the official PopSign download is still blocked by an expired certificate, and more signers would help most; (3) vocabulary: `puppy` has two signed forms and tracks poorly, so it is excluded from the first real vocabulary, which should grow toward 20 to 30 signs in measured stages; (4) fingerspelling letter recognition was added to scope by the Developer; its data feasibility check is still in progress.
 - Evidence for each item is in the dated entries above.
 
+### Nov 9 — Letter classifier cross-dataset feasibility result
+
+- Setup, fixed before running: the 24 letters shared by both datasets (A-Y without J); hand landmarks from the browser's Hand Landmarker model in image mode, converted to pixel units, wrist-relative and palm-scaled (63 values); one small classifier (63-128-24 network, dropout 0.2, 30 fixed epochs, seed 20261109, no early stopping); mirrored copies added to the training data only; test data never mirrored. Samples: SignAlphaSet 600 per letter, Cabana Train 400 per letter, Cabana Test 30 per letter. A hand was found in 98.6%, 96.3%, and 94.9% of those samples.
+- Handedness labels disagreed across datasets (Cabana Train 81% "Left"; SignAlphaSet 86% and Cabana Test 86% "Right"), which is why the classifier trains on mirrored copies instead of relying on the label.
+- Train Cabana, test SignAlphaSet (different people and setting): **68.3% top-1**, 84.9% top-3 over 14,193 images; chance is 4.2%.
+- Train SignAlphaSet, test Cabana Test (different people and setting): **49.3% top-1**, 73.8% top-3 over 683 images.
+- Train Cabana, test Cabana Test (signers may overlap, so not signer-separated): 86.7% top-1, 95.0% top-3. The gap to the two cross-dataset numbers suggests that new people and settings cost a lot of accuracy, though signers are unknown so the cause is not isolated.
+- Letters with 0% in a direction: `G`, `X`, `M` (Cabana to SignAlphaSet) and `G`, `M`, `O`, `X` (SignAlphaSet to Cabana Test). Most common mistakes: `M` as `S`, `G` as `C`, `Q` as `C`, `X` as `C` or `D`, and fist-like letters (`A`, `S`, `T`, `N`) mixed with each other. Fist-like letters differ mainly by thumb position, and `G`/`Q`/`X` depend on hand orientation, which differs between the datasets; neither explanation has been tested.
+- **Reading:** letters are learnable from landmarks well above chance, but cross-dataset accuracy of 49% to 68% is not yet a good level, and some letters fail completely. This is one fixed configuration on two datasets with unknown signers. Any change tuned against these same test sets would make later numbers exploratory, not clean.
+- No J or Z; no model exported; nothing in the browser.
+- **Developer decision gate:** (a) one declared improvement attempt on these datasets (for example rotation normalization and training on both sets, evaluated by leaving one dataset out); (b) move to FSboard letter segments; (c) collect a small signer-labeled letter set.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
