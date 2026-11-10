@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train one compact GRU feasibility model on contract-v1 landmark sequences."""
+"""Train one compact GRU feasibility model on contract-v1 or contract-v2 landmark sequences."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
+from landmark_contract_v2 import HAND_FEATURES
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -21,7 +22,12 @@ DEFAULT_MANIFEST = Path(
     "training-artifacts/phase2-five-sign-large-extraction/extraction-manifest.json"
 )
 DEFAULT_OUTPUT = Path("training-artifacts/phase2-five-sign-gru")
-CONTRACT_PATH = Path("training/landmark-contract.v1.json")
+# Per-contract feature layout: path of the contract file, and the width of the hand
+# block (both hands) at the start of each frame; the rest of the frame is body anchors.
+CONTRACTS = {
+    1: {"path": Path("training/landmark-contract.v1.json"), "hand_width": 136},
+    2: {"path": Path("training/landmark-contract.v2.json"), "hand_width": 2 * HAND_FEATURES},
+}
 SPLITS = {"train", "val", "test"}
 
 
@@ -151,7 +157,12 @@ def evaluate(
 
 
 def synthetic_negative_results(
-    model: nn.Module, mean: np.ndarray, scale: np.ndarray, reference: np.ndarray, labels: list[str]
+    model: nn.Module,
+    mean: np.ndarray,
+    scale: np.ndarray,
+    reference: np.ndarray,
+    labels: list[str],
+    hand_width: int,
 ) -> dict:
     missing_frame = (np.zeros_like(mean) - mean) / scale
     inputs = {
@@ -159,8 +170,8 @@ def synthetic_negative_results(
         "pose-only-missing-hands": reference.copy(),
         "alternating-hand-loss": reference.copy(),
     }
-    inputs["pose-only-missing-hands"][:, :136] = missing_frame[:136]
-    inputs["alternating-hand-loss"][::2, :136] = missing_frame[:136]
+    inputs["pose-only-missing-hands"][:, :hand_width] = missing_frame[:hand_width]
+    inputs["alternating-hand-loss"][::2, :hand_width] = missing_frame[:hand_width]
     batch = torch.from_numpy(np.stack(list(inputs.values())).astype(np.float32))
     model.eval()
     with torch.no_grad():
@@ -199,7 +210,8 @@ def main() -> int:
     torch.use_deterministic_algorithms(True)
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    current_contract_hash = sha256(CONTRACT_PATH)
+    contract = CONTRACTS[int(manifest["contractVersion"])]
+    current_contract_hash = sha256(contract["path"])
     if manifest["contractSha256"] != current_contract_hash:
         raise RuntimeError("Extraction manifest does not match the current landmark contract")
     examples = load_examples(manifest)
@@ -284,7 +296,9 @@ def main() -> int:
     validation = evaluate(model, *split_tensors["val"], labels, loss_function)
     test = evaluate(model, *split_tensors["test"], labels, loss_function)
     reference = ((raw_train[0] - mean) / scale).astype(np.float32)
-    negatives = synthetic_negative_results(model, mean, scale, reference, labels)
+    negatives = synthetic_negative_results(
+        model, mean, scale, reference, labels, contract["hand_width"]
+    )
     target_passed = test["top1Accuracy"] >= args.target_accuracy
     negative_rejection_passed = all(item["rejected"] for item in negatives.values())
     export_ready = target_passed and negative_rejection_passed

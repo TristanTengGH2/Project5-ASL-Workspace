@@ -257,6 +257,16 @@ Record what you tested and what happened. For peer testing, note what people did
 - No model was trained or exported, and Phase 3 has not started. Ignored outputs are in `training-artifacts/*-v2b-*`.
 - **Developer decision gate:** decide whether to retrain the single approved GRU on the regenerated v2 tensors, and whether to filter or flag intervals with low dominant-hand detection first. Do not retrain until approved.
 
+### Nov 9 — Contract-v2 GRU retrain and decision gate
+
+- The Developer approved retraining the one bidirectional GRU, unfiltered, on the regenerated v2 tensors. `training/train_temporal_model.py` previously accepted only contract v1; it now selects the contract file and hand-block width from the manifest's `contractVersion`. A 2-epoch run on a v1 manifest still works.
+- Same 150 signer-separated Google sequences (20 train / 5 validation / 5 test per sign), same seed and settings, `48 x 167` inputs. Best epoch 16 of 51. Validation top-1 **44.0%**, test top-1 **52.0%** (13 of 25), against the 70% gate: **fail**. The v1 run scored 60.0% validation and 48.0% test. With 25 test clips, one clip is 4 percentage points, so the 48% to 52% change is one clip and is not evidence of improvement.
+- Test per-class correct counts: `after` 2/5, `hear` 4/5, `man` 3/5, `pen` 2/5, `puppy` 2/5. The model reached train loss 0.02 while validation loss rose after epoch 20, which indicates overfitting to 100 training clips.
+- Frozen-model PopSign check (diagnostic only, no refit or tuning): 34.5% on all 55 clips and 33.3% on the 15 official test clips, versus 25.5% before the v2 changes (chance is 20%). `pen` is no longer the dominant prediction (24 of 55). This remains well below usable.
+- Synthetic negatives are still not rejected (idle hands predicted `hear` at 0.34, missing hands `pen` at 0.37, alternating hand loss `after` at 0.65). Unknown rejection is unimplemented, so no browser export was attempted.
+- Ignored outputs: `training-artifacts/google-five-sign-gru-v2b/`, `training-artifacts/google-v2b-to-popsign-transfer.json`.
+- **Developer decision gate:** the single-GRU result missed the gate again after the pipeline fixes. Per the plan, stop adding model variations and review data quantity, vocabulary, and the data source. Options to weigh: more training clips per sign than 20, a different or smaller vocabulary, or accepting a deliberately tiny proof vocabulary. Do not enter Phase 3 until one is approved.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
