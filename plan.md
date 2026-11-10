@@ -267,6 +267,18 @@ Record what you tested and what happened. For peer testing, note what people did
 - Ignored outputs: `training-artifacts/google-five-sign-gru-v2b/`, `training-artifacts/google-v2b-to-popsign-transfer.json`.
 - **Developer decision gate:** the single-GRU result missed the gate again after the pipeline fixes. Per the plan, stop adding model variations and review data quantity, vocabulary, and the data source. Options to weigh: more training clips per sign than 20, a different or smaller vocabulary, or accepting a deliberately tiny proof vocabulary. Do not enter Phase 3 until one is approved.
 
+### Nov 9 — 80/20/20 five-sign GRU result and decision gate
+
+- The Developer approved expanding the same five signs (`after`, `hear`, `man`, `pen`, `puppy`) to 80 training and 20 validation/test clips per sign, keeping one GRU and the 70% held-out top-1 gate.
+- The first Kaggle import timed out at file 389 of 600 after about 23 minutes (an external read timeout). One retry reused the cached files and finished in about 3 minutes. Measured throughput therefore varied between roughly 0.8 and 3.6 seconds per file, so earlier all-signs time estimates are uncertain.
+- Data checks: 600 sequences (400 train, 100 validation, 100 test), all earlier 150 sequences included, the same 13/4/4 participant split with no overlap, and all tensors finite `48 x 167`. The dominant hand was detected in under 60% of frames in 105 of 600 intervals; no filtering was applied.
+- Same seed and settings as the previous run. Best epoch 13 of 48. Validation top-1 **70.0%**, test top-1 **74.0%** (74 of 100 clips from four held-out participants), so the 70% accuracy gate **passes**. The test set was evaluated once, after the best-validation checkpoint was restored. With 100 clips from four signers the test estimate is imprecise: its 95% interval is roughly 65% to 82%, which includes values below the gate.
+- Test per-class correct counts: `after` 17/20, `hear` 17/20, `man` 18/20, `pen` 16/20, `puppy` 6/20. `puppy` is the weak sign; 7 of its 20 test clips were predicted as `after`. Overfitting is still visible (train loss 0.006, validation loss rising after about epoch 20) but is less severe than at 20 clips per sign.
+- Frozen-model PopSign check (diagnostic only, no refit or tuning): 65.5% on all 55 clips (up from 34.5%), 40.0% on the 15 official PopSign test clips, 73.3% on validation, 76.0% on train. The 15-clip test figure is too small to interpret on its own.
+- The synthetic idle/missing-hand inputs still receive confident class predictions, and unknown-input rejection is not implemented, so the export gate **fails** and nothing was exported.
+- Ignored outputs: `training-artifacts/google-five-sign-v2c-extraction/`, `training-artifacts/google-five-sign-gru-v2c/`, `training-artifacts/google-v2c-to-popsign-transfer.json`.
+- **Developer decision gate:** the accuracy gate passed on a bridge dataset with a wide interval, and unknown rejection is missing. Decide whether to accept this as the Phase 2 feasibility result, and choose the next step: (a) implement and test unknown-input rejection on this model, (b) investigate why `puppy` fails, or (c) widen the vocabulary in stages. Do not enter Phase 3 or export a browser model until this is approved.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
