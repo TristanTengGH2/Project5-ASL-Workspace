@@ -278,6 +278,7 @@ Record what you tested and what happened. For peer testing, note what people did
 - The synthetic idle/missing-hand inputs still receive confident class predictions, and unknown-input rejection is not implemented, so the export gate **fails** and nothing was exported.
 - Ignored outputs: `training-artifacts/google-five-sign-v2c-extraction/`, `training-artifacts/google-five-sign-gru-v2c/`, `training-artifacts/google-v2c-to-popsign-transfer.json`.
 - **Developer decision gate:** the accuracy gate passed on a bridge dataset with a wide interval, and unknown rejection is missing. Decide whether to accept this as the Phase 2 feasibility result, and choose the next step: (a) implement and test unknown-input rejection on this model, (b) investigate why `puppy` fails, or (c) widen the vocabulary in stages. Do not enter Phase 3 or export a browser model until this is approved.
+- **Developer response (Nov 9):** accepted the 74.0% held-out result as the Phase 2 feasibility result, with the caveats above (bridge dataset, imprecise estimate, weak `puppy`, no unknown rejection). Export and Phase 3 still wait on unknown-input rejection.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
