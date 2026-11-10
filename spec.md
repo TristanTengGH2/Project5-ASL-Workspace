@@ -80,7 +80,8 @@ For each feature or behavior you are building, describe what it should do and wh
 - The interface says capture or scan, not record video. Webcam frames are neither saved nor uploaded.
 - An attempt with too few usable frames or inadequate tracking asks the User to retry and does not produce a confident sign result.
 - A replaceable recognition model returns up to five candidates drawn only from the supported vocabulary, ordered by model score.
-- When no candidate meets the tested confidence rule, the result is `Unknown` rather than a forced match.
+- The default result is that the app does not know. Candidates appear only as labeled possible matches with their scores. The app presents a sign as recognized only if a tested rule shows that its confidence measure separates supported signs from unknown input; that has not been shown yet (validation AUROC 0.640 for top probability, 0.637 for margin, 0.649 for entropy), so otherwise the result is `Unknown` or `Not sure` rather than a forced match.
+- A later, separately approved translation feature may show a context-based guess in parentheses. A guess is labeled as a guess, is drawn only from the model's own candidates, never adds a word the model did not propose, and is tested against showing no guess before it ships.
 - Results identify that they are possible matches, show the model's uncertainty, and provide a reference for comparing candidates when licensing permits.
 - The complete supported vocabulary and the single-sign limitation are visible before or alongside the results.
 - Recognition is evaluated on signers excluded from training. The project reports top-1 and top-5 performance, unknown-sign behavior, and browser latency rather than describing the model as generally accurate.
@@ -228,6 +229,7 @@ Consequential structural decisions, the alternatives considered, and why you cho
 | Build a small versioned Handshape catalog that references PopSign | Copy PopSign into a new database or claim an authoritative ASL dictionary | Gives the app and training tools one licensed metadata contract while preserving provenance and keeping media out of Git |
 | Use Standard and Reduced device modes | One lowest-common-denominator tracker or many hardware tiers | Preserves detailed hands, makes reduced body support explicit, and avoids multiplying untested configurations |
 | Revise preprocessing through a separate contract v2 | Keep incompatible v1 source features or overwrite historical evidence | Cross-source testing exposed reversed handedness, unequal clip intervals, and tracker-specific hip/visibility channels; a versioned contract keeps the correction reproducible |
+| Default to "unknown" and show candidates as possible matches | Show the top candidate as the recognized sign, or reject with a confidence threshold | Nov 9 validation tests found that softmax-based scores separate supported from unsupported signs poorly, so a forced or thresholded answer would be confidently wrong too often; the Developer chose to assume the app does not know and offer candidates, with context guesses only as a later labeled feature |
 | Keep continuous ASL transcription outside the five-week scope | Treat isolated gloss predictions as a transcript or expand immediately into conversation translation | Continuous translation needs sign segmentation, coarticulation, facial and spatial grammar, fingerspelling, context, and continuous-language data that the current isolated-sign sources and performance baseline do not provide |
 
 ### Provisional evaluation record
