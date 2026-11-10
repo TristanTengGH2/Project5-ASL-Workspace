@@ -297,6 +297,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - No test-split rejection result exists, and no model was exported.
 - **Developer decision gate:** a plain confidence threshold is a weak unknown detector for this model. Options: (a) accept a threshold anyway and state the trade-off; (b) test another score such as top-1/top-2 margin on validation only; (c) train an explicit "unknown" class from other signs' training-participant clips (a model change that needs approval); (d) use no hard rejection and show ranked candidates with a visible low-confidence warning, as lookup does. Do not run the test stage until a rule and threshold are chosen.
 
+### Nov 9 — Alternative confidence scores (option b) on validation only
+
+- The Developer chose to test another score before changing the model. Two alternatives were fixed in advance and added to `training/evaluate_unknown_rejection.py`: the margin between the top two probabilities, and one minus the normalized softmax entropy. The test participants were not evaluated.
+- Separation of real signs from unsupported signs on the validation participants (AUROC; 0.5 is chance): top probability **0.640**, margin **0.637**, entropy **0.649**. The differences are well inside the noise of 100 real-sign and 200 unsupported-sign clips.
+- At the threshold that rejects about 80% of unsupported signs, the share of real signs kept is 42% (top), 40% (margin) and 43% (entropy). At about 50% rejection it is 66%, 66% and 68%.
+- **Result:** none of the three softmax-based scores is a usable unknown detector for this model. This is one family of rule (a score computed from the same softmax output), not three independent approaches. No test-split rejection result exists and nothing was exported.
+- `train_temporal_model.py` now also stores each synthetic negative's full probability vector (additive).
+- **Developer decision gate:** remaining options are (c) train an explicit "unknown" class from other signs' training-participant clips, evaluated on unsupported signs that were not used in training, which is a model change needing approval; or (d) no hard rejection, showing ranked candidates with a visible low-confidence warning. Do not run the test stage until a rule is chosen.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

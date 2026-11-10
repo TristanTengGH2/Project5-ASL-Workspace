@@ -182,6 +182,7 @@ def synthetic_negative_results(
         results[name] = {
             "predicted": labels[best],
             "confidence": float(probabilities[index, best]),
+            "probabilities": probabilities[index].tolist(),
             "rejected": False,
             "note": "No unknown-sign rejection threshold is fitted in Phase 2.",
         }
