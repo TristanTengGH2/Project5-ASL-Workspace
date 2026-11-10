@@ -101,6 +101,7 @@ Keep the current stretch goals in priority order, starting from your approved pi
 Record consequential changes to the approved scope: what changed, why, and what was added or cut. Update `spec.md` when a change alters the intended behavior.
 
 - **Nov 9:** Continuous ASL-to-English transcription was explicitly deferred beyond the five-week scope. The current project remains an isolated-sign recognizer and lookup tool. This prevents an isolated gloss log from being misrepresented as conversational translation and avoids silently expanding into continuous segmentation, grammar, face/nonmanual interpretation, open-vocabulary fingerspelling, and slang.
+- **Nov 9:** The Developer decided to add letter-by-letter ASL fingerspelling recognition as a feature, motivated by words and variants (for example the two forms of `puppy`) that the isolated-sign vocabulary cannot cover. Scope is single letters held one at a time; fingerspelled words and phrases (sequence recognition and letter segmentation) stay out of scope. It does not change the isolated-sign unknown-detection problem. No training data is committed yet: no verified dataset found so far has isolated letters with signer IDs (see the datasets table). `spec.md` and `plan.md` are not yet revised for this change.
 
 ## Sources and credits
 
@@ -115,6 +116,9 @@ List every external source, code library, asset, and dataset you use, with its l
 | ASL-LEX 2.0 | https://osf.io/zpha4/ | CC BY 4.0 per OSF project metadata; license of the example videos not checked | Cite Sehyr, Caselli, Cohen-Goldberg & Emmorey (2021), J. Deaf Studies and Deaf Education 26(2), 263-277, doi 10.1093/deafed/enaa038 | Candidate for sign metadata; not used yet |
 | Kaggle Google ISLR (asl-signs) | https://www.kaggle.com/competitions/asl-signs | CC BY 4.0 plus accepted Kaggle competition rules; landmark data must not be used for identification | Cite Chow et al., "Google - Isolated Sign Language Recognition," Kaggle 2023 | In use as a Phase 2 landmark-pipeline benchmark; 150 selected sequences remain local and are not redistributed |
 | WLASL | https://github.com/dxli94/WLASL | C-UDA 1.0 | n/a | Not used: labels from video titles, documented gloss inconsistency (Neidle and Ballard, Boston University) |
+| FSboard (Google) | https://www.kaggle.com/datasets/googleai/fsboard | CC BY 4.0 per the Kaggle dataset metadata (read via the Kaggle API on Nov 9); about 1.45 TB | Cite Georg et al., "FSboard: Over 3 million characters of ASL fingerspelling collected via smartphones" (CVPR 2025, arXiv:2407.15806) | Not used. 147 consenting Deaf signers, phone video of fingerspelled phrases, not isolated letters |
+| SignAlphaSet (Mendeley Data) | https://data.mendeley.com/datasets/8fmvr9m98w/3 | CC BY 4.0 per its page | Cite the dataset (DOI 10.17632/8fmvr9m98w.3) | Not used yet. A-Z folders (about 26,000 images) plus short videos; signer count, resolution and capture method not stated, so held-out-signer testing is not currently possible |
+| American Sign Language Alphabet Dataset (Mendeley Data) | https://data.mendeley.com/datasets/jdyksv2jhh/1 | CC BY 4.0 per its page; requires citing the dataset and its paper | Cite dataset (DOI 10.17632/jdyksv2jhh.1) and Cabana (2025) | Not used yet. Train/test letter folders; image count, J/Z coverage and signers not stated |
 
 ### Code libraries and models
 
