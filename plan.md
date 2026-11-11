@@ -381,6 +381,7 @@ Record what you tested and what happened. For peer testing, note what people did
 - Contract v2 extraction succeeded for 89 of 90 clips; one `alligator` training clip had no detected dominant hand and is recorded as a failure. All 89 tensors are finite and shaped `48 x 167`; every reported frame decoded.
 - Active-interval dominant-hand coverage is median 87.1%, p10 70.9%, minimum 50%. Three successful clips fall below the 60% review threshold (`airplane` train, `alligator` train, `any` validation); none of the 20 test clips do. No clips were silently removed and no model was trained.
 - Local ignored evidence: `datasets/popsign-v1-0/all-sign-screening-5-2-2/sample-manifest.json` and `training-artifacts/popsign-all-sign-screening-v2/{extraction-manifest,quality-report}.json`.
+- Batch 2 completed the next 10 signs (`awake` through `before`), bringing the cumulative screen to 20/250 signs, 180 videos (942,577,041 bytes), 179 finite tensors, and the same one recorded failure. Active-interval coverage remains similar (median 86.2%, p10 71.3%); five cumulative successful clips are below 60%, adding `bed` training and `bath` validation to the three Batch 1 cases. All 40 cumulative test clips extracted successfully, and split signer overlap remains zero.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
