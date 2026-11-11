@@ -362,6 +362,17 @@ Record what you tested and what happened. For peer testing, note what people did
 - No J or Z; nothing exported; nothing in the browser.
 - **Developer decision gate:** (a) visually compare `G`, `M`, `X`, `D` samples between the two datasets to test the label-convention explanation; (b) FSboard letter segments; (c) a small self-collected, signer-labeled letter set. Do not tune further against these test sets without recording it as exploratory.
 
+### Nov 11 — PopSign four-sign source-matched checkpoint
+
+- The official PopSign v1.0 site and archive endpoint are available again over valid HTTPS. A read-only request to the official `after` training archive returned HTTP 200 on Nov 11; no certificate bypass was used.
+- The Developer approved a source-matched dataset report before retraining. `training/download_catalog_sample.py` now accepts selected catalog IDs or display glosses. The byte-range downloader retrieved 120 videos (690,008,613 bytes) for `after`, `hear`, `man`, and `pen`: 20 train, 5 validation, and 5 test clips per sign. Source videos and manifests remain Git-ignored.
+- The bounded sample contains 31 unique training signers, 8 validation signers, and 7 test signers, with no signer overlap between splits. Each sign/split count matches the requested 20/5/5.
+- Contract v2 extraction with PopSign's verified `keep` handedness rule produced 120 finite `48 x 167` tensors. Every reported source frame decoded. Clips contain a median 65 decoded frames and 33.5 selected active frames.
+- Whole-clip hand detection is uneven (median 44.1%, p10 25.1%), but the motion-selected active intervals are substantially denser: median dominant-hand detection 87.5%, p10 74.9%. Two `after` clips fall below the 60% active-interval review threshold, one training and one validation; none of the 20 test clips do. They are retained rather than silently filtered.
+- Reproducible aggregate checks are in `training/report_popsign_checkpoint.py`; the local ignored evidence is `training-artifacts/popsign-four-sign-v2-extraction/quality-report.json` and its extraction manifest. The identifiable source videos and tensors are not committed.
+- The existing local active-interval contact-sheet renderer was attempted twice against the new manifest and aborted both times with exit code 134 and no output. Per the two-failure rule, no further renderer variation was attempted. Numeric extraction checks passed, but visual interval review is not claimed.
+- No model was trained and the test labels were not used for model selection. **Developer decision gate:** inspect the two weak `after` clips/resolve the renderer first, or accept the measured dataset checkpoint and approve one PopSign-trained four-sign model using validation for selection and test once for the final report.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

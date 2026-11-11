@@ -23,15 +23,42 @@ def main() -> int:
     parser.add_argument("--test", type=int, default=3)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--max-member-mb", type=float, default=25.0)
+    parser.add_argument(
+        "--signs",
+        nargs="+",
+        help="Catalog sign IDs or display glosses to download (default: every catalog sign)",
+    )
     args = parser.parse_args()
     limits = {"train": args.train, "val": args.val, "test": args.test}
     if any(value < 1 for value in limits.values()):
         parser.error("Every split limit must be at least 1")
 
     catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
-    run_manifest = {"catalogVersion": catalog["catalogVersion"], "limits": limits, "downloads": []}
-    maximum_bytes = math.floor(args.max_member_mb * 1_000_000)
+    catalog_signs = {sign["id"]: sign for sign in catalog["signs"]}
+    sign_aliases = dict(catalog_signs)
     for sign in catalog["signs"]:
+        gloss = sign["displayGloss"]
+        if gloss in sign_aliases:
+            parser.error(f"Ambiguous catalog sign selector: {gloss}")
+        sign_aliases[gloss] = sign
+
+    requested = args.signs or list(catalog_signs)
+    unknown = sorted(set(requested) - set(sign_aliases))
+    if unknown:
+        parser.error(f"Unknown catalog signs: {', '.join(unknown)}")
+    requested_ids = [sign_aliases[selector]["id"] for selector in requested]
+    if len(requested_ids) != len(set(requested_ids)):
+        parser.error("--signs must not contain duplicates")
+
+    selected_signs = [catalog_signs[sign_id] for sign_id in requested_ids]
+    run_manifest = {
+        "catalogVersion": catalog["catalogVersion"],
+        "signIds": requested_ids,
+        "limits": limits,
+        "downloads": [],
+    }
+    maximum_bytes = math.floor(args.max_member_mb * 1_000_000)
+    for sign in selected_signs:
         for split, limit in limits.items():
             url = sign["archives"][split]
             selected = []

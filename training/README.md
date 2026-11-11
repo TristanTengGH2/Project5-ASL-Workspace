@@ -161,6 +161,26 @@ MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
 .venv/bin/python training/train_temporal_model.py
 ```
 
+`--signs` accepts either catalog IDs or display glosses. Omit it to download
+every catalog sign. For example, the Nov 11 source-matched checkpoint excluded
+the rejected `puppy` entry with:
+
+```sh
+python3 training/download_catalog_sample.py \
+  --train 20 --val 5 --test 5 \
+  --signs after hear man pen \
+  --output datasets/popsign-v1-0/four-sign-20-5-5
+```
+
+Generate the pre-training integrity and tracking report with:
+
+```sh
+.venv/bin/python training/report_popsign_checkpoint.py \
+  datasets/popsign-v1-0/phase2-five-sign-large/sample-manifest.json \
+  training-artifacts/phase2-five-sign-large-extraction/extraction-manifest.json \
+  --output training-artifacts/phase2-five-sign-large-extraction/quality-report.json
+```
+
 The checkpoint target is at least 70% top-1 accuracy on the official held-out
 test signers across all five signs. Accuracy alone does not authorize browser
 export: unknown-input rejection must also pass. If this single temporal model
