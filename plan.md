@@ -373,6 +373,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - The existing local active-interval contact-sheet renderer was attempted twice against the new manifest and aborted both times with exit code 134 and no output. Per the two-failure rule, no further renderer variation was attempted. Numeric extraction checks passed, but visual interval review is not claimed.
 - No model was trained and the test labels were not used for model selection. **Developer decision gate:** inspect the two weak `after` clips/resolve the renderer first, or accept the measured dataset checkpoint and approve one PopSign-trained four-sign model using validation for selection and test once for the final report.
 
+### Nov 11 — PopSign-wide screening started
+
+- The Developer accepted the four-sign checkpoint and approved staged screening of every available PopSign v1.0 game sign at 5 train, 2 validation, and 2 test clips per sign, without training. The official index yielded exactly 250 v1.0 game signs, matching the data card.
+- Download and extraction are now resumable per video. Download manifests are written atomically after each selected member; extraction manifests are written after each tensor. `--batch-signs` bounds a run, and `--continue-on-error` records screening failures while strict extraction remains the default.
+- Batch 1 covered the first 10 alphabetical signs (`after` through `aunt`): 90 videos, 486,508,530 bytes. It used 26 training, 7 validation, and 8 test signers with no cross-split overlap.
+- Contract v2 extraction succeeded for 89 of 90 clips; one `alligator` training clip had no detected dominant hand and is recorded as a failure. All 89 tensors are finite and shaped `48 x 167`; every reported frame decoded.
+- Active-interval dominant-hand coverage is median 87.1%, p10 70.9%, minimum 50%. Three successful clips fall below the 60% review threshold (`airplane` train, `alligator` train, `any` validation); none of the 20 test clips do. No clips were silently removed and no model was trained.
+- Local ignored evidence: `datasets/popsign-v1-0/all-sign-screening-5-2-2/sample-manifest.json` and `training-artifacts/popsign-all-sign-screening-v2/{extraction-manifest,quality-report}.json`.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews

@@ -459,6 +459,12 @@ def videos_from_inputs(inputs: Iterable[str]) -> list[Path]:
     return sorted(set(videos))
 
 
+def write_extraction_manifest(path: Path, manifest: dict) -> None:
+    temporary = path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+", help="MP4 files or directories")
@@ -469,6 +475,11 @@ def main() -> int:
     parser.add_argument("--hand-detection-confidence", type=float, default=0.4)
     parser.add_argument("--hand-presence-confidence", type=float, default=0.4)
     parser.add_argument("--hand-tracking-confidence", type=float, default=0.4)
+    parser.add_argument(
+        "--continue-on-error",
+        action="store_true",
+        help="Record per-video failures and continue; intended for dataset screening",
+    )
     args = parser.parse_args()
     output = args.output or DEFAULT_OUTPUTS[args.contract_version]
     contract_path = CONTRACT_PATHS[args.contract_version]
@@ -480,6 +491,36 @@ def main() -> int:
         if not model.exists():
             parser.error(f"Missing {model}; run npm run fetch-assets from app/")
 
+    output.mkdir(parents=True, exist_ok=True)
+    manifest_path = output / "extraction-manifest.json"
+    manifest_config = {
+        "contractVersion": contract["contractVersion"],
+        "contractSha256": sha256(contract_path),
+        "handModelSha256": sha256(HAND_MODEL),
+        "poseModelSha256": sha256(POSE_MODEL),
+        "handednessMode": args.handedness_mode,
+        "maximumTrackingSide": args.maximum_side,
+        "handConfidenceThresholds": {
+            "detection": args.hand_detection_confidence,
+            "presence": args.hand_presence_confidence,
+            "tracking": args.hand_tracking_confidence,
+        },
+    }
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        actual_config = {key: manifest.get(key) for key in manifest_config}
+        if actual_config != manifest_config:
+            raise RuntimeError(
+                "Existing extraction manifest does not match this run; "
+                "choose a different output directory"
+            )
+    else:
+        manifest = {**manifest_config, "videos": [], "failures": []}
+        write_extraction_manifest(manifest_path, manifest)
+
+    manifest.setdefault("failures", [])
+    reports_by_video = {item["video"]: item for item in manifest["videos"]}
+    failures_by_video = {item["video"]: item for item in manifest["failures"]}
     vision = mp.tasks.vision
     hand_options = vision.HandLandmarkerOptions(
         base_options=mp.tasks.BaseOptions(model_asset_path=str(HAND_MODEL)),
@@ -497,41 +538,51 @@ def main() -> int:
         min_pose_presence_confidence=0.4,
         min_tracking_confidence=0.4,
     )
-    reports = []
     for video in videos:
+        previous = reports_by_video.get(str(video))
+        if previous is not None and Path(previous["tensor"]).exists():
+            print(f"Skipping extracted {video}", flush=True)
+            continue
+        if str(video) in failures_by_video and args.continue_on_error:
+            print(f"Skipping recorded failure {video}", flush=True)
+            continue
         print(f"Extracting {video}", flush=True)
         # VIDEO mode requires increasing timestamps and carries tracking state.
         # A fresh pair per clip prevents state from crossing signer boundaries.
-        with vision.HandLandmarker.create_from_options(hand_options) as hands:
-            with vision.PoseLandmarker.create_from_options(pose_options) as pose:
-                extractor = extract_video_v2 if args.contract_version == 2 else extract_video
-                report = extractor(
-                    video, hands, pose, contract, output, args.handedness_mode, args.maximum_side
-                )
-        reports.append(report)
+        try:
+            with vision.HandLandmarker.create_from_options(hand_options) as hands:
+                with vision.PoseLandmarker.create_from_options(pose_options) as pose:
+                    extractor = extract_video_v2 if args.contract_version == 2 else extract_video
+                    report = extractor(
+                        video, hands, pose, contract, output, args.handedness_mode, args.maximum_side
+                    )
+        except (OSError, RuntimeError, ValueError) as error:
+            if not args.continue_on_error:
+                raise
+            failure = {"video": str(video), "error": str(error)}
+            previous_failure = failures_by_video.get(str(video))
+            if previous_failure is None:
+                manifest["failures"].append(failure)
+            else:
+                index = manifest["failures"].index(previous_failure)
+                manifest["failures"][index] = failure
+            failures_by_video[str(video)] = failure
+            write_extraction_manifest(manifest_path, manifest)
+            print(f"  failed: {error}", flush=True)
+            continue
+        if previous is None:
+            manifest["videos"].append(report)
+        else:
+            index = manifest["videos"].index(previous)
+            manifest["videos"][index] = report
+        reports_by_video[str(video)] = report
+        write_extraction_manifest(manifest_path, manifest)
         print(
             f"  {report['decodedFrames']} frames; "
             f"hands {report['handDetectionRate']:.1%}; body {report['bodyAnchorRate']:.1%}",
             flush=True,
         )
 
-    manifest = {
-        "contractVersion": contract["contractVersion"],
-        "contractSha256": sha256(contract_path),
-        "handModelSha256": sha256(HAND_MODEL),
-        "poseModelSha256": sha256(POSE_MODEL),
-        "handednessMode": args.handedness_mode,
-        "maximumTrackingSide": args.maximum_side,
-        "handConfidenceThresholds": {
-            "detection": args.hand_detection_confidence,
-            "presence": args.hand_presence_confidence,
-            "tracking": args.hand_tracking_confidence,
-        },
-        "videos": reports,
-    }
-    output.mkdir(parents=True, exist_ok=True)
-    manifest_path = output / "extraction-manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"Manifest: {manifest_path}")
     return 0
 

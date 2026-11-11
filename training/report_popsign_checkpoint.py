@@ -54,12 +54,17 @@ def main() -> int:
     extraction = json.loads(args.extraction_manifest.read_text(encoding="utf-8"))
     downloads = download["downloads"]
     videos = extraction["videos"]
+    failures = extraction.get("failures", [])
 
     downloaded_paths = {str(Path(item["localPath"]).resolve()) for item in downloads}
     extracted_paths = {str(Path(item["video"]).resolve()) for item in videos}
-    if downloaded_paths != extracted_paths:
-        missing = sorted(downloaded_paths - extracted_paths)
-        unexpected = sorted(extracted_paths - downloaded_paths)
+    failure_paths = {str(Path(item["video"]).resolve()) for item in failures}
+    if extracted_paths & failure_paths:
+        raise ValueError("A video cannot be both successfully extracted and failed")
+    processed_paths = extracted_paths | failure_paths
+    if downloaded_paths != processed_paths:
+        missing = sorted(downloaded_paths - processed_paths)
+        unexpected = sorted(processed_paths - downloaded_paths)
         raise ValueError(f"Manifest paths differ; missing={missing}, unexpected={unexpected}")
 
     signer_sets: dict[str, set[str]] = defaultdict(set)
@@ -68,6 +73,14 @@ def main() -> int:
         signer_sets[item["split"]].add(item["signerId"])
         sign = item["signId"].rsplit(":", 1)[-1]
         counts[(item["split"], sign)] += 1
+
+    downloaded_sign_ids = sorted({item["signId"] for item in downloads})
+    expected_per_sign = sum(download["limits"].values())
+    completed_sign_ids = sorted(
+        sign_id
+        for sign_id in downloaded_sign_ids
+        if sum(item["signId"] == sign_id for item in downloads) == expected_per_sign
+    )
 
     overlaps = {}
     split_names = ("train", "val", "test")
@@ -90,7 +103,10 @@ def main() -> int:
     report = {
         "source": {
             "dataset": "PopSign ASL v1.0",
-            "signIds": download["signIds"],
+            "plannedSignCount": len(download["signIds"]),
+            "downloadedSignCount": len(downloaded_sign_ids),
+            "completedSignCount": len(completed_sign_ids),
+            "completedSignIds": completed_sign_ids,
             "limits": download["limits"],
             "downloadedVideos": len(downloads),
             "downloadedBytes": sum(item["bytes"] for item in downloads),
@@ -106,7 +122,14 @@ def main() -> int:
         "extraction": {
             "contractVersion": extraction["contractVersion"],
             "handednessMode": extraction["handednessMode"],
-            "videos": len(videos),
+            "successfulVideos": len(videos),
+            "failedVideos": len(failures),
+            "failuresByReason": dict(
+                sorted(
+                    (reason, sum(item["error"] == reason for item in failures))
+                    for reason in {item["error"] for item in failures}
+                )
+            ),
             "decodedFrameMismatches": sum(
                 item["sourceFramesReported"] != item["decodedFrames"] for item in videos
             ),

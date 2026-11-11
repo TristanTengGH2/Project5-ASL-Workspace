@@ -181,6 +181,26 @@ Generate the pre-training integrity and tracking report with:
   --output training-artifacts/phase2-five-sign-large-extraction/quality-report.json
 ```
 
+For broad screening, use resumable sign batches. The download manifest and
+extraction manifest are updated atomically after every video. Failed clips are
+recorded as screening evidence instead of silently removed:
+
+```sh
+.venv/bin/python training/download_catalog_sample.py \
+  --all-popsign-game --train 5 --val 2 --test 2 --batch-signs 10 \
+  --output datasets/popsign-v1-0/all-sign-screening-5-2-2
+
+MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
+  datasets/popsign-v1-0/all-sign-screening-5-2-2 \
+  --contract-version 2 --handedness-mode keep --continue-on-error \
+  --output training-artifacts/popsign-all-sign-screening-v2
+
+.venv/bin/python training/report_popsign_checkpoint.py \
+  datasets/popsign-v1-0/all-sign-screening-5-2-2/sample-manifest.json \
+  training-artifacts/popsign-all-sign-screening-v2/extraction-manifest.json \
+  --output training-artifacts/popsign-all-sign-screening-v2/quality-report.json
+```
+
 The checkpoint target is at least 70% top-1 accuracy on the official held-out
 test signers across all five signs. Accuracy alone does not authorize browser
 export: unknown-input rejection must also pass. If this single temporal model
