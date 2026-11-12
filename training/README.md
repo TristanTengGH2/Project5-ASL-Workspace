@@ -199,7 +199,15 @@ MPLCONFIGDIR=/tmp/handshape-mpl .venv/bin/python training/extract_landmarks.py \
   datasets/popsign-v1-0/all-sign-screening-5-2-2/sample-manifest.json \
   training-artifacts/popsign-all-sign-screening-v2/extraction-manifest.json \
   --output training-artifacts/popsign-all-sign-screening-v2/quality-report.json
+
+.venv/bin/python training/rank_popsign_screening.py \
+  training-artifacts/popsign-all-sign-screening-v2/extraction-manifest.json \
+  --output training-artifacts/popsign-all-sign-screening-v2/ranking.json
 ```
+
+The ranking uses training and validation tracking quality only. It does not
+read test metrics, measure recognition accuracy, or prove that two signs are
+visually distinguishable.
 
 The checkpoint target is at least 70% top-1 accuracy on the official held-out
 test signers across all five signs. Accuracy alone does not authorize browser
