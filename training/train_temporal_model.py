@@ -149,8 +149,8 @@ def evaluate(
         "loss": loss,
         "examples": len(rows),
         "top1Accuracy": correct / len(rows),
+        "top3Accuracy": sum(row["expected"] in row["ranking"][:3] for row in rows) / len(rows),
         "top5Accuracy": sum(row["expected"] in row["ranking"][:5] for row in rows) / len(rows),
-        "top5Note": "Top-5 is non-discriminating when the vocabulary contains exactly five classes.",
         "confusion": confusion,
         "predictions": rows,
     }

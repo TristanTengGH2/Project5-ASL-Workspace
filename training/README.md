@@ -215,6 +215,10 @@ export: unknown-input rejection must also pass. If this single temporal model
 misses the target, stop and review the data, preprocessing, and vocabulary
 instead of adding another architecture.
 
+The temporal evaluator reports top-1, top-3, top-5, per-example rankings, and
+the full confusion matrix. Test evaluation occurs only after the checkpoint
+selected by validation loss is restored.
+
 ## Temporary Google-landmark bridge
 
 If the official PopSign video server is unavailable, the Google Isolated Sign

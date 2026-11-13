@@ -386,6 +386,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - `training/rank_popsign_screening.py` ranks data quality using training and validation clips only; it does not read test metrics. The first ten signs with no failed or weak train/validation clips and the strongest minimum coverage are `all`, `animal`, `because`, `apple`, `book`, `awake`, `bedroom`, `blue`, `boat`, and `aunt`. This is a tracking-quality ranking, not recognition accuracy or proof of class separability.
 - **Proposed first PopSign accuracy checkpoint:** expand those ten signs to 20 train, 5 validation, and 5 test clips; train one fixed compact temporal model with validation-only selection; then evaluate the untouched test split once and report top-1, top-3, per-sign recall, and the confusion matrix. A 70% top-1 target is a provisional feasibility bar, not a product-quality claim. Do not export the model automatically. This expansion and training require Developer approval.
 
+### Nov 13 — First ten-sign PopSign accuracy checkpoint
+
+- The Developer approved the fixed ten-sign checkpoint. The byte-range downloader retrieved 300 official PopSign videos (1,638,099,550 bytes): 20 train, 5 validation, and 5 test clips for each of `all`, `animal`, `because`, `apple`, `book`, `awake`, `bedroom`, `blue`, `boat`, and `aunt`.
+- Contract v2 extraction produced 300 finite `48 x 167` tensors with no failures. The split contains 31 training, 8 validation, and 8 test signers with no cross-split overlap. Median active dominant-hand coverage is 87.5%, p10 78.9%; one clip is below 60%.
+- One fixed one-layer bidirectional GRU (seed 20261109, hidden size 48, dropout 0.2, batch 16, AdamW 0.001/0.0001) selected epoch 26 by validation loss and stopped after 61 epochs. Validation was **68.0% top-1** and **92.0% top-3** on 50 clips. The untouched test split was then evaluated once: **78.0% top-1** and **92.0% top-3** on 50 clips, passing the provisional 70% feasibility gate.
+- Test recall by sign: `all` 4/5, `animal` 4/5, `apple` 5/5, `aunt` 4/5, `awake` 5/5, `because` 3/5, `bedroom` 3/5, `blue` 4/5, `boat` 5/5, `book` 2/5. The largest confusion is `book` as `boat` (3/5), showing that tracking-quality selection does not establish class separability.
+- Limits: five test clips per sign are imprecise; validation is 10 points lower than test; this is one seed and one selected vocabulary. The 78% figure must not be presented as expected live-webcam accuracy. Unknown rejection is still unsupported, so status is `not-ready` and browser export was not attempted.
+- Local ignored evidence: `training-artifacts/popsign-ten-sign-v2-extraction/{extraction-manifest,quality-report}.json` and `training-artifacts/popsign-ten-sign-gru/{evaluation.json,gru-model.pt}`.
+
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
 ## Simplification reviews
