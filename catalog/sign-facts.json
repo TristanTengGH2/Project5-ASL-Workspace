@@ -1,0 +1,122 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "name": "ASL-LEX 2.0",
+  "citation": "Sehyr, Caselli, Cohen-Goldberg & Emmorey (2021), J. Deaf Studies and Deaf Education 26(2), 263-277, doi 10.1093/deafed/enaa038",
+  "license": "CC BY 4.0",
+  "url": "https://osf.io/zpha4/",
+  "note": "Codes describe citation forms; the PopSign example may differ. Fields are omitted when a sign's ASL-LEX forms disagree."
+ },
+ "signs": {
+  "popsign-v1-0:game:all": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "AsymmetricalSameHandshape",
+   "majorLocation": "Hand",
+   "minorLocation": "HandAway",
+   "movement": "Circular",
+   "repeated": "0",
+   "handshape": "open_b",
+   "nonDominantHandshape": "open_b"
+  },
+  "popsign-v1-0:game:animal": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": "Body",
+   "minorLocation": "TorsoTop",
+   "movement": "Straight",
+   "repeated": "1",
+   "handshape": "flat_b",
+   "nonDominantHandshape": "flat_b"
+  },
+  "popsign-v1-0:game:apple": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "CheekNose",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "bent_1",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:aunt": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "HeadAway",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "a",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:awake": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": "Head",
+   "minorLocation": "Eye",
+   "movement": "Straight",
+   "repeated": "0",
+   "handshape": "g",
+   "nonDominantHandshape": "f"
+  },
+  "popsign-v1-0:game:because": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "Forehead",
+   "movement": "Curved",
+   "repeated": "0",
+   "handshape": "open_b",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:bedroom": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": "Head",
+   "minorLocation": "Other",
+   "movement": "None",
+   "repeated": "0",
+   "handshape": "open_b",
+   "nonDominantHandshape": "open_b"
+  },
+  "popsign-v1-0:game:blue": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Neutral",
+   "minorLocation": "Neutral",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "closed_b",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:boat": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": "Neutral",
+   "minorLocation": "Neutral",
+   "movement": "Curved",
+   "repeated": "1",
+   "handshape": "open_b",
+   "nonDominantHandshape": "open_b"
+  },
+  "popsign-v1-0:game:book": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": "Neutral",
+   "minorLocation": "Neutral",
+   "movement": "Curved",
+   "repeated": "1",
+   "handshape": "open_b",
+   "nonDominantHandshape": "open_b"
+  }
+ }
+}

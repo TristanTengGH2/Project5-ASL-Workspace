@@ -5,3 +5,5 @@ public/models
 public/wasm
 # Generated from the root catalog by `npm run prepare:catalog`.
 public/data/sign-catalog.json
+public/data/sign-references.json
+public/data/sign-facts.json

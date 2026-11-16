@@ -29,6 +29,7 @@
       <div class="camera-control">
         <button id="toggle-camera" type="button">Start camera</button>
         <button id="scan-sign" type="button" disabled>Scan a sign</button>
+        <button id="open-guide" type="button">How to sign</button>
       </div>
 
       <section id="results" class="results-overlay" aria-labelledby="results-title" hidden>
@@ -54,6 +55,41 @@
         </p>
       </section>
     </main>
+
+    <dialog id="sign-guide" aria-labelledby="guide-title">
+      <header class="guide-header">
+        <h2 id="guide-title">How to sign</h2>
+        <button id="guide-close" type="button">Close</button>
+      </header>
+      <div class="guide-body">
+        <ul id="guide-list" class="guide-list" aria-label="Supported signs"></ul>
+        <div class="guide-view">
+          <h3 id="guide-sign"></h3>
+          <dl id="guide-facts" class="guide-facts"></dl>
+          <div class="guide-pair">
+            <figure>
+              <canvas id="guide-canvas" width="440" height="440" role="img" aria-label="Animated hand position"></canvas>
+              <figcaption>Where it moves</figcaption>
+            </figure>
+            <figure>
+              <canvas id="guide-closeup" width="440" height="440" role="img" aria-label="Close-up of the hand shape"></canvas>
+              <figcaption>Hand shape <span id="guide-legend" class="guide-legend"></span></figcaption>
+            </figure>
+          </div>
+          <div class="guide-controls">
+            <button id="guide-play" type="button">Pause</button>
+            <label>Frame <input id="guide-frame" type="range" min="0" max="47" value="0" /></label>
+          </div>
+          <div class="guide-steps" aria-label="Start, middle and end of the sign">
+            <figure><canvas id="guide-step-start" width="180" height="180" role="img" aria-label="Start of the sign"></canvas><figcaption>Start</figcaption></figure>
+            <figure><canvas id="guide-step-middle" width="180" height="180" role="img" aria-label="Middle of the sign"></canvas><figcaption>Middle</figcaption></figure>
+            <figure><canvas id="guide-step-end" width="180" height="180" role="img" aria-label="End of the sign"></canvas><figcaption>End</figcaption></figure>
+          </div>
+          <p id="guide-caption"></p>
+          <p id="guide-attribution" class="guide-attribution"></p>
+        </div>
+      </div>
+    </dialog>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

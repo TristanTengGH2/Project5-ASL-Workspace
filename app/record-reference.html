@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Record sign reference (dev only)</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/record-reference.css" />
+  </head>
+  <body>
+    <main class="recorder">
+      <h1>Record a sign reference</h1>
+      <p class="note">
+        Development tool, for a fluent signer. Only hand landmarks are saved (numbers, no video or face). The
+        saved file becomes the tutorial animation for the chosen sign, so sign it the way a fluent signer would.
+      </p>
+      <p id="status" role="status" aria-live="polite">Loading…</p>
+
+      <section class="setup">
+        <label>Sign
+          <select id="sign"></select>
+        </label>
+        <p id="sign-hint"></p>
+        <label><input id="mirror" type="checkbox" checked /> Mirror preview</label>
+        <div class="buttons">
+          <button id="camera" type="button">Start camera</button>
+          <button id="record" type="button" disabled>Record</button>
+        </div>
+      </section>
+
+      <section class="live">
+        <div class="stage" id="stage">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+      </section>
+
+      <section id="review" class="review" hidden>
+        <h2>Review</h2>
+        <div class="pair">
+          <canvas id="review-body" width="360" height="360" role="img" aria-label="Preview of where the hands move"></canvas>
+          <canvas id="review-hands" width="360" height="360" role="img" aria-label="Preview of the hand shapes"></canvas>
+        </div>
+        <div class="trim">
+          <label>Trim start <input id="trim-start" type="range" min="0" max="0" value="0" /></label>
+          <label>Trim end <input id="trim-end" type="range" min="0" max="0" value="0" /></label>
+        </div>
+        <p id="stats"></p>
+        <div class="buttons">
+          <button id="save" type="button">Save take</button>
+          <button id="retake" type="button">Retake</button>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/record-reference.ts"></script>
+  </body>
+</html>

@@ -3,6 +3,7 @@ import { CaptureController } from "./capture-controller";
 import { Overlay } from "./overlay";
 import type { SequenceDiagnostics } from "./preprocessing";
 import { Recognizer, type RankedCandidate } from "./recognizer";
+import { SignGuide } from "./sign-guide";
 import { Tracker, type TrackingFrame } from "./tracker";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -22,6 +23,8 @@ const liveMatch = $("live-match");
 const diagnosticBtn = $<HTMLButtonElement>("download-diagnostic");
 
 const camera = new Camera(video);
+const guide = new SignGuide(() => mirror.checked);
+$("open-guide").addEventListener("click", () => void guide.open());
 const overlay = new Overlay($<HTMLCanvasElement>("overlay"));
 let tracker: Tracker | null = null;
 let recognizer: Recognizer | null = null;
@@ -69,7 +72,13 @@ function showCandidates(candidates: RankedCandidate[]): void {
     label.textContent = candidate.label;
     const score = document.createElement("strong");
     score.textContent = `${(candidate.score * 100).toFixed(1)}%`;
-    item.append(label, score);
+    const guideLink = document.createElement("button");
+    guideLink.type = "button";
+    guideLink.className = "guide-link";
+    guideLink.textContent = "How to sign";
+    guideLink.setAttribute("aria-label", `How to sign ${candidate.label}`);
+    guideLink.addEventListener("click", () => void guide.open(candidate.id));
+    item.append(label, score, guideLink);
     return item;
   }));
   resultsEl.hidden = false;

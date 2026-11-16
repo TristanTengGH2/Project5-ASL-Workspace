@@ -134,6 +134,45 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
 .hands-stat { min-width: 12rem; }
 .check-note { margin: 0.5rem 0 0; color: #b9c5d0; font-size: 0.75rem; }
 
+.results-overlay li { align-items: center; }
+.guide-link { padding: 0.2rem 0.6rem; border-width: 1px; font-size: 0.72rem; box-shadow: none; text-transform: none; }
+
+/* How-to-sign reference dialog */
+#sign-guide {
+  width: min(52rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1rem 1.25rem;
+  color: #fff;
+  background: #10202f;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  overflow: auto;
+}
+#sign-guide::backdrop { background: rgba(5, 12, 19, 0.7); }
+.guide-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.guide-header h2 { margin: 0; font-size: 1.15rem; }
+.guide-body { display: grid; grid-template-columns: 9rem 1fr; gap: 1.25rem; margin-top: 0.85rem; }
+.guide-list { display: grid; align-content: start; gap: 0.35rem; margin: 0; padding: 0; list-style: none; max-height: 60dvh; overflow: auto; }
+.guide-list button { width: 100%; padding: 0.4rem 0.7rem; box-shadow: none; text-align: left; text-transform: capitalize; border-width: 1px; }
+.guide-list button[aria-current="true"] { background: var(--coral); border-color: var(--coral); color: #10202f; font-weight: 700; }
+.guide-view h3 { margin: 0 0 0.5rem; font-size: 1.3rem; text-transform: capitalize; }
+.guide-facts { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.9rem; margin: 0 0 0.8rem; font-size: 0.9rem; }
+.guide-facts dt { color: #b9c5d0; }
+.guide-facts dd { margin: 0; }
+.guide-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.guide-pair figure, .guide-steps figure { margin: 0; }
+.guide-pair canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; background: #0b1722; border-radius: 12px; }
+.guide-pair figcaption, .guide-steps figcaption { margin-top: 0.3rem; color: #b9c5d0; font-size: 0.78rem; }
+.guide-legend { display: inline-flex; flex-wrap: wrap; gap: 0 0.5rem; margin-left: 0.4rem; font-weight: 700; }
+.guide-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 0.8rem; }
+.guide-steps canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; background: #0b1722; border-radius: 10px; }
+.guide-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; margin-top: 0.6rem; }
+.guide-controls button { padding: 0.35rem 0.9rem; box-shadow: none; }
+.guide-controls label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+#guide-caption { margin: 0.8rem 0 0; font-size: 0.9rem; line-height: 1.4; font-weight: 600; }
+.guide-attribution { margin: 0.5rem 0 0; color: #b9c5d0; font-size: 0.72rem; line-height: 1.35; }
+@media (max-width: 700px) { .guide-pair { grid-template-columns: 1fr; } .guide-body { grid-template-columns: 1fr; } .guide-list { grid-auto-flow: column; grid-auto-columns: max-content; max-height: none; overflow-x: auto; } }
+
 @media (max-width: 700px) {
   .top-overlay p { display: none; }
   .status-overlay { top: calc(max(1rem, env(safe-area-inset-top)) + 3.4rem); left: 1rem; right: auto; }

@@ -9,7 +9,8 @@
     "prepare:catalog": "npm run validate:catalog && node scripts/prepare-catalog.mjs",
     "dev": "npm run prepare:catalog && vite",
     "build": "npm run prepare:catalog && tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:reference": "node tests/reference-take.test.mts"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

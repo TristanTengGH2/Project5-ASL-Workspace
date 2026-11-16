@@ -373,3 +373,40 @@ cd ..
 Videos are served only to the local headless browser from the git-ignored
 `datasets/` directory and are never copied into the app. The replay page
 (`video-replay.html`) is not part of the production build.
+
+## "How to sign" reference data
+
+Two generated files feed the app's tutorial panel. Both are small, hold no video or
+signer identifiers, and are committed with their attribution:
+
+```sh
+# One 48-frame dominant-hand landmark animation per supported sign, from PopSign tensors.
+PYTHONPATH=training .venv/bin/python training/build_sign_references.py \
+  training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json
+
+# Hands, location, movement and handshape from ASL-LEX 2.0 (CC BY 4.0). Download
+# signdata.csv from https://osf.io/zpha4/ (Data Files) into the ignored datasets/asl-lex/.
+python3 -I training/build_sign_facts.py datasets/asl-lex/signdata.csv
+```
+
+`npm run validate:catalog` checks that every supported sign has both.
+
+### Recording two-handed references
+
+PopSign signers hold the phone, so no source shows the second hand. A fluent signer records
+each two-handed sign with the app's own tracker:
+
+1. Run `npm run dev` in `app/`, open http://localhost:5173/record-reference.html (localhost only).
+2. Choose the sign, start the camera, press Record, sign after the 3-second countdown, then Stop.
+3. Check the preview, trim the start and end so only the sign remains, and press Save take. The
+   page refuses to save when the signing hand, or a required second hand, was not tracked well.
+4. Merge the downloaded `reference-take-*.json` files into the catalog:
+
+```sh
+PYTHONPATH=training .venv/bin/python training/merge_reference_takes.py ~/Downloads/reference-take-book-*.json
+cd app && npm run validate:catalog
+```
+
+The take file holds landmark numbers only (no video, image, or face). The recorder's data code is
+tested with `npm run test:reference` in `app/`. `validate:catalog` lists the two-handed signs that
+still lack a recorded second hand.

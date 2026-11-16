@@ -1,0 +1,26 @@
+:root { color-scheme: dark; --coral: #e8756a; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; color: #fff; background: #0b1722; }
+.recorder { max-width: 56rem; margin: 0 auto; padding: 1rem; display: grid; gap: 0.9rem; }
+h1 { margin: 0; font-size: 1.3rem; }
+h2 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+.note { margin: 0; color: #b9c5d0; font-size: 0.85rem; line-height: 1.4; }
+#status { margin: 0; padding: 0.55rem 0.8rem; background: rgba(255,255,255,0.1); border-radius: 10px; }
+.setup { display: grid; gap: 0.6rem; }
+.setup label { display: flex; align-items: center; gap: 0.6rem; }
+select, button { font: inherit; padding: 0.5rem 0.9rem; border-radius: 999px; border: 2px solid #fff; background: #152c42; color: #fff; }
+button { cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+.buttons { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+#sign-hint { margin: 0; color: #f7c948; font-size: 0.9rem; }
+.stage { position: relative; width: min(100%, 40rem); aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; }
+.stage.mirrored { transform: scaleX(-1); }
+.stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.review[hidden] { display: none; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; max-width: 40rem; }
+.pair canvas { width: 100%; height: auto; aspect-ratio: 1; background: #0b1722; border-radius: 12px; }
+.trim { display: grid; gap: 0.4rem; margin-top: 0.7rem; max-width: 40rem; }
+.trim label { display: grid; grid-template-columns: 7rem 1fr; align-items: center; gap: 0.6rem; font-size: 0.85rem; }
+#stats { color: #b9c5d0; font-size: 0.85rem; }
+@media (max-width: 600px) { .pair { grid-template-columns: 1fr; } }
