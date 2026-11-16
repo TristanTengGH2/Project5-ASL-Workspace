@@ -1,5 +1,5 @@
 import type { TrackingFrame } from "./tracker";
-import { frameFeatures, prepareSequence, shouldersReady, type FeatureFrame } from "./preprocessing";
+import { frameFeatures, prepareSequence, prepareSequenceDetailed, shouldersReady, type FeatureFrame, type SequenceDiagnostics } from "./preprocessing";
 
 export type CaptureState = "idle" | "waiting" | "countdown" | "capturing" | "processing";
 
@@ -13,7 +13,7 @@ export class CaptureController {
 
   constructor(
     private onStatus: (message: string) => void,
-    private onSequence: (sequence: Float32Array) => Promise<void>,
+    private onSequence: (sequence: Float32Array, diagnostics: SequenceDiagnostics) => Promise<void>,
     private onIdle: () => void,
     private onPreview: (sequence: Float32Array) => void = () => undefined,
   ) {}
@@ -78,8 +78,8 @@ export class CaptureController {
     this.state = "processing";
     this.onStatus("Finding possible matches…");
     try {
-      const sequence = prepareSequence(this.frames);
-      void this.onSequence(sequence).finally(() => {
+      const prepared = prepareSequenceDetailed(this.frames);
+      void this.onSequence(prepared.tensor, prepared.diagnostics).finally(() => {
         this.state = "idle";
         this.onIdle();
       });

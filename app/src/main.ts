@@ -1,6 +1,7 @@
 import { Camera } from "./camera";
 import { CaptureController } from "./capture-controller";
 import { Overlay } from "./overlay";
+import type { SequenceDiagnostics } from "./preprocessing";
 import { Recognizer, type RankedCandidate } from "./recognizer";
 import { Tracker, type TrackingFrame } from "./tracker";
 
@@ -18,6 +19,7 @@ const candidateList = $("candidate-list");
 const scanFeedback = $("scan-feedback");
 const scanPhase = $("scan-phase");
 const liveMatch = $("live-match");
+const diagnosticBtn = $<HTMLButtonElement>("download-diagnostic");
 
 const camera = new Camera(video);
 const overlay = new Overlay($<HTMLCanvasElement>("overlay"));
@@ -31,6 +33,14 @@ const LOST_WINDOW_MS = 2000;
 let lastHandsSeen = -Infinity;
 let lastVideoTime = -1;
 let previewBusy = false;
+let latestDiagnostic: {
+  createdAt: string;
+  contractVersion: number;
+  tensorShape: [number, number];
+  diagnostics: SequenceDiagnostics;
+  tensor: number[];
+  browserRanking: RankedCandidate[];
+} | null = null;
 
 function setStatus(text: string): void { statusEl.textContent = text; }
 
@@ -66,9 +76,18 @@ function showCandidates(candidates: RankedCandidate[]): void {
 
 const capture = new CaptureController(
   setScanStatus,
-  async (sequence) => {
+  async (sequence, diagnostics) => {
     try {
       const candidates = await recognizer!.rank(sequence);
+      latestDiagnostic = {
+        createdAt: new Date().toISOString(),
+        contractVersion: 2,
+        tensorShape: [48, 167],
+        diagnostics,
+        tensor: Array.from(sequence),
+        browserRanking: candidates,
+      };
+      diagnosticBtn.disabled = false;
       showCandidates(candidates);
       setStatus("Not sure—compare these possible matches, or try again for clarity.");
       scanPhase.textContent = "Final possible match";
@@ -147,6 +166,8 @@ function stopCamera(): void {
   cancelAnimationFrame(loopId);
   capture.cancel();
   scanFeedback.hidden = true;
+  latestDiagnostic = null;
+  diagnosticBtn.disabled = true;
   camera.stop();
   overlay.render(null, video.videoWidth, video.videoHeight);
   recent = [];
@@ -174,6 +195,8 @@ async function startScan(): Promise<void> {
   }
   resultsEl.hidden = true;
   candidateList.replaceChildren();
+  latestDiagnostic = null;
+  diagnosticBtn.disabled = true;
   liveMatch.hidden = true;
   liveMatch.textContent = "";
   scanFeedback.hidden = false;
@@ -184,6 +207,17 @@ async function startScan(): Promise<void> {
 
 toggleBtn.addEventListener("click", () => camera.running ? stopCamera() : void startCamera());
 scanBtn.addEventListener("click", () => void startScan());
+diagnosticBtn.hidden = !["localhost", "127.0.0.1"].includes(location.hostname);
+diagnosticBtn.addEventListener("click", () => {
+  if (!latestDiagnostic) return;
+  const blob = new Blob([`${JSON.stringify(latestDiagnostic, null, 2)}\n`], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `handshape-scan-${latestDiagnostic.createdAt.replaceAll(":", "-")}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+});
 mirror.addEventListener("change", () => stage.classList.toggle("mirrored", mirror.checked));
 stage.classList.toggle("mirrored", mirror.checked);
 addEventListener("pagehide", () => camera.stop());

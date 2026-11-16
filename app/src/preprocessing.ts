@@ -12,6 +12,27 @@ export interface FeatureFrame {
   features: Float32Array;
 }
 
+export interface SequenceDiagnostics {
+  rawFrameCount: number;
+  captureDurationMs: number;
+  activeStartFrame: number;
+  activeEndFrame: number;
+  activeFrameCount: number;
+  activeDurationMs: number;
+  detectedDominantHand: "left" | "right";
+  dominanceMirrored: boolean;
+  dominantHandPresenceRate: number;
+  nonDominantHandPresenceRate: number;
+  twoHandPresenceRate: number;
+  bodyAnchorPresenceRate: number;
+  dominantWristPath: number;
+}
+
+export interface PreparedBrowserSequence {
+  tensor: Float32Array;
+  diagnostics: SequenceDiagnostics;
+}
+
 function distance2d(a: NormalizedLandmark, b: NormalizedLandmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
@@ -155,9 +176,9 @@ function selectActiveInterval(features: Float32Array[]): [number, number] {
   return [Math.max(0, runs[0].start - 2), Math.min(features.length, runs[0].end + 2)];
 }
 
-export function prepareSequence(frames: FeatureFrame[]): Float32Array {
+export function prepareSequenceDetailed(frames: FeatureFrame[]): PreparedBrowserSequence {
   if (frames.length < 2) throw new Error("Not enough tracked frames were captured.");
-  const { features } = canonicalize(frames);
+  const { features, dominant } = canonicalize(frames);
   const [start, end] = selectActiveInterval(features);
   const active = features.slice(start, end).map((frame) => frame.slice());
   for (const offset of [0, HAND_FEATURES]) {
@@ -176,5 +197,40 @@ export function prepareSequence(frames: FeatureFrame[]): Float32Array {
     for (let index = 1; index < positions.length; index += 1) if (Math.abs(positions[index] - target) < Math.abs(positions[nearest] - target)) nearest = index;
     output.set(active[nearest], targetIndex * FRAME_FEATURES);
   }
-  return output;
+  const dominantFrames = active.filter((frame) => frame[66] > 0);
+  let wristPath = 0;
+  for (let index = 1; index < dominantFrames.length; index += 1) {
+    wristPath += Math.hypot(
+      dominantFrames[index][63] - dominantFrames[index - 1][63],
+      dominantFrames[index][64] - dominantFrames[index - 1][64],
+    );
+  }
+  const rate = (matches: number) => matches / active.length;
+  const bodyPresent = active.reduce((total, frame) => {
+    let present = 0;
+    for (let anchor = 0; anchor < BODY_ANCHORS.length; anchor += 1) present += frame[HAND_FEATURES * 2 + anchor * 3 + 2] > 0 ? 1 : 0;
+    return total + present / BODY_ANCHORS.length;
+  }, 0) / active.length;
+  return {
+    tensor: output,
+    diagnostics: {
+      rawFrameCount: frames.length,
+      captureDurationMs: frames.at(-1)!.timestampMs - frames[0].timestampMs,
+      activeStartFrame: start,
+      activeEndFrame: end,
+      activeFrameCount: active.length,
+      activeDurationMs: positions.at(-1)! - positions[0],
+      detectedDominantHand: dominant,
+      dominanceMirrored: dominant === "left",
+      dominantHandPresenceRate: rate(dominantFrames.length),
+      nonDominantHandPresenceRate: rate(active.filter((frame) => frame[HAND_FEATURES + 66] > 0).length),
+      twoHandPresenceRate: rate(active.filter((frame) => frame[66] > 0 && frame[HAND_FEATURES + 66] > 0).length),
+      bodyAnchorPresenceRate: bodyPresent,
+      dominantWristPath: wristPath,
+    },
+  };
+}
+
+export function prepareSequence(frames: FeatureFrame[]): Float32Array {
+  return prepareSequenceDetailed(frames).tensor;
 }

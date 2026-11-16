@@ -126,6 +126,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
 .controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
 .controls label { white-space: nowrap; font-size: 0.85rem; }
 .controls input { margin-right: 0.35rem; }
+.diagnostic-button { padding: 0.35rem 0.7rem; border-width: 1px; font-size: 0.78rem; box-shadow: none; }
 .stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0.65rem 0 0; }
 .stats div { display: flex; gap: 0.4rem; }
 .stats dt { color: #b9c5d0; }

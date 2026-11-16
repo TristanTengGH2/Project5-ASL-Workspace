@@ -224,6 +224,20 @@ Both generated browser model files stay Git-ignored with the other fetched model
 assets. The export is a Phase 3 integration input, not a claim that unknown-sign
 rejection works.
 
+On localhost only, the app exposes an explicit **Download scan diagnostics**
+button after a completed scan. It downloads the normalized `48 x 167` landmark
+tensor and numeric scan metadata, never video or images. Replay it through the
+PyTorch model and compare it with the expected PopSign training class using:
+
+```sh
+.venv/bin/python training/compare_browser_capture.py \
+  ~/Downloads/handshape-scan-TIMESTAMP.json --expected apple \
+  --output training-artifacts/browser-diagnostics/apple.json
+```
+
+The download and comparison report are development evidence and must not be
+committed.
+
 The checkpoint target is at least 70% top-1 accuracy on the official held-out
 test signers across all five signs. Accuracy alone does not authorize browser
 export: unknown-input rejection must also pass. If this single temporal model
