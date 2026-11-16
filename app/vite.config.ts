@@ -5,6 +5,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         app: "index.html",
+        modelSmoke: "model-smoke.html",
         workerSpike: "worker-spike.html",
       },
     },

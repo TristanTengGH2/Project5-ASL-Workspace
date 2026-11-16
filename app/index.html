@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handshape · tracking spike</title>
+    <title>Handshape · sign scan prototype</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
@@ -15,15 +15,22 @@
       </div>
 
       <header class="top-overlay">
-        <h1>Handshape <small>tracking spike</small></h1>
-        <p>Webcam tracking test · Video stays in your browser</p>
+        <h1>Handshape <small>sign scan prototype</small></h1>
+        <p>Single-sign possible matches · Video stays in your browser</p>
       </header>
 
       <p id="status" class="status-overlay" role="status" aria-live="polite">Camera is off.</p>
 
       <div class="camera-control">
         <button id="toggle-camera" type="button">Start camera</button>
+        <button id="scan-sign" type="button" disabled>Scan a sign</button>
       </div>
+
+      <section id="results" class="results-overlay" aria-labelledby="results-title" hidden>
+        <h2 id="results-title">Not sure — possible matches</h2>
+        <ol id="candidate-list"></ol>
+        <p>Scores rank this model’s ten supported signs; they do not prove the sign is recognized.</p>
+      </section>
 
       <section class="control-dock" aria-label="Tracking controls and diagnostics">
         <div class="controls">
@@ -37,7 +44,7 @@
           <div class="hands-stat"><dt>Hands</dt><dd id="hands">–</dd></div>
         </dl>
         <p class="check-note">
-          Raise your right hand: its box should say Right, even when mirrored.
+          Scan waits for your shoulders and hand, counts down, and stops automatically.
         </p>
       </section>
     </main>

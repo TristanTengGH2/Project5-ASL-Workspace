@@ -209,6 +209,21 @@ The ranking uses training and validation tracking quality only. It does not
 read test metrics, measure recognition accuracy, or prove that two signs are
 visually distinguishable.
 
+Export an approved temporal checkpoint for local browser integration and verify
+its ONNX logits and complete rankings against every held-out test clip:
+
+```sh
+.venv/bin/python training/export_temporal_onnx.py \
+  --checkpoint training-artifacts/popsign-ten-sign-gru/gru-model.pt \
+  --manifest training-artifacts/popsign-ten-sign-v2-extraction/extraction-manifest.json \
+  --output app/public/models/sign-recognizer.onnx \
+  --metadata app/public/models/sign-recognizer.json
+```
+
+Both generated browser model files stay Git-ignored with the other fetched model
+assets. The export is a Phase 3 integration input, not a claim that unknown-sign
+rejection works.
+
 The checkpoint target is at least 70% top-1 accuracy on the official held-out
 test signers across all five signs. Accuracy alone does not authorize browser
 export: unknown-input rejection must also pass. If this single temporal model

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "catalogVersion": "0.1.0",
-  "description": "Structural sample for the Handshape ASL sign catalog. Sample entries are not yet approved model vocabulary.",
+  "catalogVersion": "0.2.0",
+  "description": "Supported vocabulary for the first ten-sign Handshape PopSign recognition prototype.",
   "language": { "code": "ase", "name": "American Sign Language" },
   "sources": [
     {
@@ -22,75 +22,15 @@
     }
   ],
   "signs": [
-    {
-      "id": "popsign-v1-0:game:after",
-      "language": "ase",
-      "displayGloss": "after",
-      "englishGlosses": ["after"],
-      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "after" },
-      "status": "sample",
-      "archives": {
-        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/after.tar",
-        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/after.tar",
-        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/after.tar"
-      },
-      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
-    },
-    {
-      "id": "popsign-v1-0:game:hear",
-      "language": "ase",
-      "displayGloss": "hear",
-      "englishGlosses": ["hear"],
-      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "hear" },
-      "status": "sample",
-      "archives": {
-        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/hear.tar",
-        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/hear.tar",
-        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/hear.tar"
-      },
-      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
-    },
-    {
-      "id": "popsign-v1-0:game:man",
-      "language": "ase",
-      "displayGloss": "man",
-      "englishGlosses": ["man"],
-      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "man" },
-      "status": "sample",
-      "archives": {
-        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/man.tar",
-        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/man.tar",
-        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/man.tar"
-      },
-      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
-    },
-    {
-      "id": "popsign-v1-0:game:pen",
-      "language": "ase",
-      "displayGloss": "pen",
-      "englishGlosses": ["pen"],
-      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "pen" },
-      "status": "sample",
-      "archives": {
-        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/pen.tar",
-        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/pen.tar",
-        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/pen.tar"
-      },
-      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
-    },
-    {
-      "id": "popsign-v1-0:game:puppy",
-      "language": "ase",
-      "displayGloss": "puppy",
-      "englishGlosses": ["puppy"],
-      "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "puppy" },
-      "status": "sample",
-      "archives": {
-        "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/puppy.tar",
-        "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/puppy.tar",
-        "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/puppy.tar"
-      },
-      "notes": ["Structural sample only; vocabulary suitability has not been reviewed."]
-    }
+    { "id": "popsign-v1-0:game:all", "language": "ase", "displayGloss": "all", "englishGlosses": ["all"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "all" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/all.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/all.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/all.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:animal", "language": "ase", "displayGloss": "animal", "englishGlosses": ["animal"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "animal" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/animal.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/animal.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/animal.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:apple", "language": "ase", "displayGloss": "apple", "englishGlosses": ["apple"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "apple" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/apple.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/apple.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/apple.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:aunt", "language": "ase", "displayGloss": "aunt", "englishGlosses": ["aunt"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "aunt" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/aunt.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/aunt.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/aunt.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:awake", "language": "ase", "displayGloss": "awake", "englishGlosses": ["awake"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "awake" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/awake.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/awake.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/awake.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:because", "language": "ase", "displayGloss": "because", "englishGlosses": ["because"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "because" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/because.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/because.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/because.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:bedroom", "language": "ase", "displayGloss": "bedroom", "englishGlosses": ["bedroom"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "bedroom" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/bedroom.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/bedroom.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/bedroom.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:blue", "language": "ase", "displayGloss": "blue", "englishGlosses": ["blue"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "blue" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/blue.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/blue.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/blue.tar" }, "notes": ["Included in the first ten-sign PopSign model; results remain possible matches because unknown rejection is unsupported."] },
+    { "id": "popsign-v1-0:game:boat", "language": "ase", "displayGloss": "boat", "englishGlosses": ["boat"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "boat" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/boat.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/boat.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/boat.tar" }, "notes": ["Included in the first ten-sign PopSign model; book was confused with boat in three of five held-out book clips."] },
+    { "id": "popsign-v1-0:game:book", "language": "ase", "displayGloss": "book", "englishGlosses": ["book"], "source": { "sourceId": "popsign-v1-0", "category": "game", "slug": "book" }, "status": "supported", "archives": { "train": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/train/book.tar", "val": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/val/book.tar", "test": "https://signdata.cc.gatech.edu/data/popsign_v1_0/game/test/book.tar" }, "notes": ["Included in the first ten-sign PopSign model; book was confused with boat in three of five held-out book clips."] }
   ]
 }

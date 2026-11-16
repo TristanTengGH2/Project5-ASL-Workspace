@@ -29,14 +29,15 @@ export class Tracker {
 
   static async create(): Promise<Tracker> {
     const t = new Tracker();
-    const vision = await FilesetResolver.forVisionTasks("/wasm");
+    const base = import.meta.env.BASE_URL;
+    const vision = await FilesetResolver.forVisionTasks(`${base}wasm`);
     t.hands = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: "/models/hand_landmarker.task", delegate: "GPU" },
+      baseOptions: { modelAssetPath: `${base}models/hand_landmarker.task`, delegate: "GPU" },
       runningMode: "VIDEO",
       numHands: 2,
     });
     t.pose = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: "/models/pose_landmarker_lite.task", delegate: "GPU" },
+      baseOptions: { modelAssetPath: `${base}models/pose_landmarker_lite.task`, delegate: "GPU" },
       runningMode: "VIDEO",
       numPoses: 1,
     });

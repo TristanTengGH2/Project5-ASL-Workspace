@@ -136,8 +136,8 @@ Camera capture --> MediaPipe tracker --> Live overlay
 - `camera.ts` owns webcam permission, the media stream, and start/stop behavior.
 - `tracker.ts` wraps MediaPipe and returns normalized hand and optional pose landmarks. Nothing outside this module depends directly on MediaPipe result objects.
 - `overlay.ts` draws hand boxes, joints, connections, and optional pose reference points in the same coordinate system as the raw video. Preview mirroring is a presentation transform.
-- A new capture controller will own readiness, countdown, bounded capture, validation, and the temporary timestamped sequence.
-- A new model interface will accept one normalized sequence and return ranked candidates and scores. The initial implementation may use TensorFlow.js or ONNX Runtime Web; that choice remains open until model export is tested.
+- `capture-controller.ts` owns readiness, countdown, bounded capture, validation, and the temporary timestamped sequence.
+- `recognizer.ts` accepts one normalized sequence and returns ranked candidates and scores through ONNX Runtime Web. The Nov 16 export matched PyTorch rankings on all 50 held-out test clips.
 - `main.ts` wires these parts together and renders the current state. It should not contain tracking or model-specific algorithms.
 
 ### Data and state
@@ -220,7 +220,7 @@ Consequential structural decisions, the alternatives considered, and why you cho
 | Run webcam processing and inference locally | Hosted video or model API | Supports privacy, free static hosting, and no account requirement |
 | Deploy with GitHub Pages | A custom server or paid host | The app is static, GitHub Pages is available with the repository, and no backend is required for the approved MVP |
 | Use structured lookup filters before an LLM | Hosted or in-browser LLM at launch | The app should first test whether handshape and location filters add enough value without model download or server costs |
-| Keep TensorFlow.js versus ONNX open | Commit to one runtime now | The export format and browser performance have not been tested yet |
+| Use ONNX Runtime Web for the first browser model | TensorFlow.js or a custom inference implementation | The approved model is trained in PyTorch; its ONNX export preserved all held-out rankings and loaded successfully in the production browser smoke test |
 | Target desktop Chrome on the Developer's Mac first | Promise broad desktop and mobile support immediately | Gives real-camera performance and behavior one reproducible initial target; other platforms can be checked after the core works |
 | Use a bounded hands-free scan after one explicit action | Manual Start/Finish controls or fully automatic continuous segmentation | Avoids capturing button-reaching motion without adding open-ended continuous sign segmentation |
 | Reduce or revise vocabulary if accuracy is inadequate | Keep all selected signs and lower expectations silently | Preserves an honest, usable result while model feasibility is still being tested |

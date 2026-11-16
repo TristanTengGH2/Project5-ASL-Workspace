@@ -42,6 +42,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
 
 .top-overlay,
 .status-overlay,
+.results-overlay,
 .control-dock {
   position: absolute;
   z-index: 2;
@@ -77,6 +78,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
   top: 50%;
   transform: translate(-50%, -50%);
   transition: left 160ms ease, top 160ms ease, transform 160ms ease;
+  display: flex;
+  gap: 0.6rem;
 }
 .camera-running .camera-control {
   left: max(1rem, env(safe-area-inset-left));
@@ -92,6 +95,19 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
   padding: 0.75rem 0.9rem;
   border-radius: 14px;
 }
+.results-overlay {
+  left: max(1rem, env(safe-area-inset-left));
+  top: 50%;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border-radius: 16px;
+  transform: translateY(-50%);
+}
+.results-overlay[hidden] { display: none; }
+.results-overlay h2 { margin: 0 0 0.65rem; font-size: 1rem; }
+.results-overlay ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; }
+.results-overlay li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0.65rem; border-radius: 9px; background: rgba(255, 255, 255, 0.1); text-transform: capitalize; }
+.results-overlay p { margin: 0.7rem 0 0; color: #c8d2dc; font-size: 0.75rem; line-height: 1.35; }
 .controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
 .controls label { white-space: nowrap; font-size: 0.85rem; }
 .controls input { margin-right: 0.35rem; }
@@ -112,6 +128,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
     width: auto;
   }
   .camera-running .camera-control { right: max(1rem, env(safe-area-inset-right)); left: auto; }
+  .camera-control { flex-direction: column; }
+  .results-overlay { top: auto; bottom: 12rem; transform: none; }
   .controls { gap: 0.5rem 0.8rem; }
   .check-note { display: none; }
 }

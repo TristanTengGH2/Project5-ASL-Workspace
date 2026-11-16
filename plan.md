@@ -22,7 +22,7 @@ The current plan for each phase, starting from the map in your pitch. Update it 
 |---|---|---|
 | Phase 1 — Ideate and pitch, through Nov 2 | Approved pitch, working title and logo direction, documented sources | Studio approval reported by the Developer on Nov 2; approved pitch remains frozen |
 | Phase 2 — Prove the core, Nov 2–9 | Real-camera tracking baseline, feasible PopSign subset, first held-out-signer model result | Prove tracking and recognition before expanding the interface. **Status Nov 9: complete as a working prototype; see the Phase 2 summary in Testing and evidence** |
-| Phase 3 — Revise and integrate, Nov 9–16 | Temporary landmark capture and real ranked results in the browser | Reduce or revise vocabulary if model accuracy is inadequate |
+| Phase 3 — Revise and integrate, Nov 9–16 | Temporary landmark capture and real ranked results in the browser | **Status Nov 16: in progress; first ONNX browser integration is built and awaits the Developer's live-camera sign test** |
 | Phase 4 — Build and test, Nov 16–30 | Unknown handling, lookup references/filters, accessibility, GitHub Pages build, peer-review version | Learn mode begins only if the primary lookup loop is stable |
 | Phase 5 — Finish and showcase, Nov 30–Dec 7 | Peer-review revisions, public deployment, final evaluation, breakdown and debrief | Fix and simplify before adding stretch work |
 
@@ -396,6 +396,15 @@ Record what you tested and what happened. For peer testing, note what people did
 - Test recall by sign: `all` 4/5, `animal` 4/5, `apple` 5/5, `aunt` 4/5, `awake` 5/5, `because` 3/5, `bedroom` 3/5, `blue` 4/5, `boat` 5/5, `book` 2/5. The largest confusion is `book` as `boat` (3/5), showing that tracking-quality selection does not establish class separability.
 - Limits: five test clips per sign are imprecise; validation is 10 points lower than test; this is one seed and one selected vocabulary. The 78% figure must not be presented as expected live-webcam accuracy. Unknown rejection is still unsupported, so status is `not-ready` and browser export was not attempted.
 - Local ignored evidence: `training-artifacts/popsign-ten-sign-v2-extraction/{extraction-manifest,quality-report}.json` and `training-artifacts/popsign-ten-sign-gru/{evaluation.json,gru-model.pt}`.
+
+### Nov 16 — Phase 3 browser integration started
+
+- The Developer approved entering Phase 3 with the ten-sign PopSign model without waiting for the separate 250-sign screen to finish. The result policy remains `Not sure` with three ranked possible matches; the browser does not claim that a softmax score recognizes or rejects an unknown sign.
+- Added a reproducible PyTorch-to-ONNX exporter. The 256.2 kB model matched PyTorch's complete ranking on all 50 held-out test clips; maximum absolute logit error was 0.00000191. The generated ONNX and metadata files remain Git-ignored model assets.
+- Added an ONNX Runtime Web adapter, a contract-v2 browser preprocessor, and a separate capture controller. One Scan action waits for a visible hand and shoulders, requires 0.5 seconds of readiness, counts down for three seconds, captures for three seconds, selects the active interval, resamples to `48 x 167`, and returns three possible matches. Pose runs every third processed scan frame and the latest anchors are reused between pose updates so hands remain the high-rate path.
+- Replaced the obsolete five-sign sample catalog with catalog version 0.2.0 containing the ten supported model signs. The recognition adapter refuses to load if model labels and supported catalog entries differ.
+- Verification: the catalog validator passed for 10 signs; TypeScript and the Vite production build passed; headless Chrome rendered the production page; and a production recognition smoke page loaded the ONNX model and returned 10 ranked candidates. The existing Python contract test was not rerun because its direct unittest invocation could not resolve the `training/` module path after two attempts; no further invocation variations were made.
+- **Developer test still required:** run several supported signs in desktop Chrome, record whether countdown/capture/retry work, whether rankings are plausible, result latency, and whether handedness/body-relative preprocessing matches the offline source. This checkpoint proves model loading and the browser pipeline, not live accuracy.
 
 For every later test, record the date, commit, environment, exact action, observed result, evidence location, and whether the Developer accepted it. Do not replace direct observations with a general statement that a feature works.
 
