@@ -8,12 +8,14 @@ export class CaptureController {
   private readySince = 0;
   private countdownStarted = 0;
   private captureStarted = 0;
+  private lastPreview = 0;
   private frames: FeatureFrame[] = [];
 
   constructor(
     private onStatus: (message: string) => void,
     private onSequence: (sequence: Float32Array) => Promise<void>,
     private onIdle: () => void,
+    private onPreview: (sequence: Float32Array) => void = () => undefined,
   ) {}
 
   get active(): boolean { return this.state !== "idle"; }
@@ -58,13 +60,21 @@ export class CaptureController {
       if (timestampMs - this.countdownStarted >= 3000) {
         this.state = "capturing";
         this.captureStarted = timestampMs;
+        this.lastPreview = timestampMs;
         this.frames = [];
         this.onStatus("Signing now… capture stops automatically.");
       }
       return;
     }
     this.frames.push({ timestampMs, features: frameFeatures(frame) });
-    if (timestampMs - this.captureStarted < 3000) return;
+    const elapsed = timestampMs - this.captureStarted;
+    this.onStatus(`Signing now… ${(elapsed / 1000).toFixed(1)} / 3.0 seconds.`);
+    if (elapsed >= 700 && timestampMs - this.lastPreview >= 500) {
+      this.lastPreview = timestampMs;
+      try { this.onPreview(prepareSequence(this.frames)); }
+      catch { /* Wait for a usable dominant-hand interval. */ }
+    }
+    if (elapsed < 3000) return;
     this.state = "processing";
     this.onStatus("Finding possible matches…");
     try {

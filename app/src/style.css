@@ -43,6 +43,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
 .top-overlay,
 .status-overlay,
 .results-overlay,
+.scan-feedback,
 .control-dock {
   position: absolute;
   z-index: 2;
@@ -51,6 +52,19 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+.scan-feedback {
+  left: 50%;
+  top: 50%;
+  min-width: min(30rem, calc(100vw - 2rem));
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+.scan-feedback[hidden] { display: none; }
+.scan-feedback span, .scan-feedback strong { display: block; }
+.scan-feedback strong { margin-top: 0.45rem; color: #f7c948; font-size: clamp(1.35rem, 4vw, 2.5rem); text-transform: capitalize; }
+.scan-feedback strong[hidden] { display: none; }
 .top-overlay {
   top: max(1rem, env(safe-area-inset-top));
   left: max(1rem, env(safe-area-inset-left));
@@ -102,6 +116,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
   padding: 1rem;
   border-radius: 16px;
   transform: translateY(-50%);
+  z-index: 4;
 }
 .results-overlay[hidden] { display: none; }
 .results-overlay h2 { margin: 0 0 0.65rem; font-size: 1rem; }

@@ -15,6 +15,9 @@ const showLabels = $<HTMLInputElement>("show-labels");
 const statusEl = $("status");
 const resultsEl = $("results");
 const candidateList = $("candidate-list");
+const scanFeedback = $("scan-feedback");
+const scanPhase = $("scan-phase");
+const liveMatch = $("live-match");
 
 const camera = new Camera(video);
 const overlay = new Overlay($<HTMLCanvasElement>("overlay"));
@@ -27,8 +30,15 @@ let recent: { t: number; ms: number }[] = [];
 const LOST_WINDOW_MS = 2000;
 let lastHandsSeen = -Infinity;
 let lastVideoTime = -1;
+let previewBusy = false;
 
 function setStatus(text: string): void { statusEl.textContent = text; }
+
+function setScanStatus(text: string): void {
+  setStatus(text);
+  scanPhase.textContent = text;
+  scanFeedback.hidden = false;
+}
 
 function handsState(frame: TrackingFrame, now: number): string {
   if (frame.hands.length === 2) return "Both hands tracked.";
@@ -55,17 +65,29 @@ function showCandidates(candidates: RankedCandidate[]): void {
 }
 
 const capture = new CaptureController(
-  setStatus,
+  setScanStatus,
   async (sequence) => {
     try {
       const candidates = await recognizer!.rank(sequence);
       showCandidates(candidates);
       setStatus("Not sure—compare these possible matches, or try again for clarity.");
+      scanPhase.textContent = "Final possible match";
+      liveMatch.textContent = candidates[0].label;
+      liveMatch.hidden = false;
     } catch (error) {
-      setStatus(`Recognition failed: ${(error as Error).message}`);
+      setScanStatus(`Recognition failed: ${(error as Error).message}`);
     }
   },
   resetScanControl,
+  (sequence) => {
+    if (previewBusy) return;
+    previewBusy = true;
+    void recognizer!.rank(sequence).then((candidates) => {
+      if (capture.state !== "capturing") return;
+      liveMatch.textContent = `Possible match: ${candidates[0].label}`;
+      liveMatch.hidden = false;
+    }).finally(() => { previewBusy = false; });
+  },
 );
 
 function loop(): void {
@@ -124,6 +146,7 @@ async function startCamera(): Promise<void> {
 function stopCamera(): void {
   cancelAnimationFrame(loopId);
   capture.cancel();
+  scanFeedback.hidden = true;
   camera.stop();
   overlay.render(null, video.videoWidth, video.videoHeight);
   recent = [];
@@ -137,6 +160,7 @@ function stopCamera(): void {
 async function startScan(): Promise<void> {
   if (capture.active) {
     capture.cancel();
+    scanFeedback.hidden = true;
     setStatus("Scan cancelled.");
     return;
   }
@@ -150,6 +174,9 @@ async function startScan(): Promise<void> {
   }
   resultsEl.hidden = true;
   candidateList.replaceChildren();
+  liveMatch.hidden = true;
+  liveMatch.textContent = "";
+  scanFeedback.hidden = false;
   scanBtn.disabled = false;
   scanBtn.textContent = "Cancel scan";
   capture.start();

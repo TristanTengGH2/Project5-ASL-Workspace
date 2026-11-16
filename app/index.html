@@ -21,6 +21,11 @@
 
       <p id="status" class="status-overlay" role="status" aria-live="polite">Camera is off.</p>
 
+      <section id="scan-feedback" class="scan-feedback" aria-live="polite" hidden>
+        <span id="scan-phase"></span>
+        <strong id="live-match" hidden></strong>
+      </section>
+
       <div class="camera-control">
         <button id="toggle-camera" type="button">Start camera</button>
         <button id="scan-sign" type="button" disabled>Scan a sign</button>

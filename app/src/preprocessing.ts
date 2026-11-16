@@ -16,17 +16,21 @@ function distance2d(a: NormalizedLandmark, b: NormalizedLandmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function visible(point: NormalizedLandmark | undefined): point is NormalizedLandmark {
-  return Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z) && (point.visibility ?? 1) >= 0.35);
+function finitePoint(point: NormalizedLandmark | undefined): point is NormalizedLandmark {
+  return Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.z));
+}
+
+function visiblePosePoint(point: NormalizedLandmark | undefined): point is NormalizedLandmark {
+  return finitePoint(point) && (point.visibility ?? 1) >= 0.35;
 }
 
 export function shouldersReady(pose: NormalizedLandmark[] | null): boolean {
-  return Boolean(pose && visible(pose[11]) && visible(pose[12]) && distance2d(pose[11], pose[12]) > 1e-6);
+  return Boolean(pose && visiblePosePoint(pose[11]) && visiblePosePoint(pose[12]) && distance2d(pose[11], pose[12]) > 1e-6);
 }
 
 function handBlock(hand: NormalizedLandmark[] | null, pose: NormalizedLandmark[] | null): Float32Array {
   const output = new Float32Array(HAND_FEATURES);
-  if (!hand || hand.length !== 21 || !hand.every((point) => visible(point))) return output;
+  if (!hand || hand.length !== 21 || !hand.every((point) => finitePoint(point))) return output;
   const wrist = hand[0];
   const palmScale = ([5, 9, 17] as const).reduce((sum, index) => sum + distance2d(hand[index], wrist), 0) / 3;
   if (palmScale <= 1e-6) return output;
@@ -57,7 +61,7 @@ function bodyBlock(pose: NormalizedLandmark[] | null): Float32Array {
   const scale = distance2d(left, right);
   BODY_ANCHORS.forEach((poseIndex, outputIndex) => {
     const point = pose[poseIndex];
-    if (!visible(point)) return;
+    if (!visiblePosePoint(point)) return;
     output[outputIndex * 3] = (point.x - originX) / scale;
     output[outputIndex * 3 + 1] = (point.y - originY) / scale;
     output[outputIndex * 3 + 2] = 1;
