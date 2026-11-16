@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from train_temporal_model import SequenceGRU, load_examples
+from train_temporal_model import SequenceGRU, drop_v3_head_offsets, load_examples
 
 
 BODY_ANCHORS = 11
@@ -63,7 +63,7 @@ def main() -> int:
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path("training-artifacts/popsign-ten-sign-gru-v3/gru-model.pt"),
+        default=Path("training-artifacts/popsign-ten-sign-gru-v3-aspect-only/gru-model.pt"),
     )
     parser.add_argument(
         "--manifest",
@@ -77,7 +77,9 @@ def main() -> int:
 
     capture = json.loads(args.capture.read_text(encoding="utf-8"))
     contract_version = int(capture["contractVersion"])
-    hand_features = {2: 67, 3: 69}.get(contract_version)
+    # Aspect-only captures are v3 geometry without head offsets (67 values per hand).
+    aspect_only = capture.get("variant") == "aspect-only-167"
+    hand_features = 67 if aspect_only else {2: 67, 3: 69}.get(contract_version)
     if hand_features is None:
         raise ValueError(f"Unsupported capture contract v{contract_version}")
     shape = tuple(capture["tensorShape"])
@@ -106,6 +108,9 @@ def main() -> int:
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     examples = [item for item in load_examples(manifest) if item["split"] == "train"]
+    if aspect_only and int(manifest["contractVersion"]) == 3:
+        for item in examples:
+            item["features"] = drop_v3_head_offsets(item["features"])
     standardized_examples = [
         (item, ((item["features"] - mean) / scale).astype(np.float32)) for item in examples
     ]

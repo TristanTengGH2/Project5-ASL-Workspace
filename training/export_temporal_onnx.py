@@ -12,7 +12,7 @@ import onnx
 import onnxruntime as ort
 import torch
 
-from train_temporal_model import SequenceGRU, load_examples
+from train_temporal_model import SequenceGRU, drop_v3_head_offsets, load_examples
 
 
 def main() -> int:
@@ -21,6 +21,11 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--metadata", type=Path, required=True)
+    parser.add_argument(
+        "--drop-head-offsets",
+        action="store_true",
+        help="Contract v3 manifests only; must match how the checkpoint was trained.",
+    )
     args = parser.parse_args()
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
@@ -52,6 +57,9 @@ def main() -> int:
 
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
     tests = [item for item in load_examples(manifest) if item["split"] == "test"]
+    if args.drop_head_offsets:
+        for item in tests:
+            item["features"] = drop_v3_head_offsets(item["features"])
     inputs = np.stack([(item["features"] - mean) / scale for item in tests]).astype(np.float32)
     with torch.no_grad():
         torch_logits = model(torch.from_numpy(inputs)).numpy()
@@ -81,6 +89,7 @@ def main() -> int:
         "scale": scale.tolist(),
         "contractVersion": manifest["contractVersion"],
         "contractSha256": manifest["contractSha256"],
+        "dropHeadOffsets": args.drop_head_offsets,
         "resultPolicy": "not-sure-with-ranked-possible-matches",
         "parity": {
             "heldOutExamples": len(tests),

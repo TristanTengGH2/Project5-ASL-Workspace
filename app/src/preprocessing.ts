@@ -33,6 +33,17 @@ export interface PreparedBrowserSequence {
   diagnostics: SequenceDiagnostics;
 }
 
+/**
+ * Aspect-correct geometry (training contract v3, without head offsets). MediaPipe
+ * normalizes x by image width and y by image height, so portrait and landscape
+ * sources distort distances differently. Convert to one pixel-scale space first;
+ * z uses the width scale, matching training/landmark_contract_v3.py.
+ */
+function toMetric(points: NormalizedLandmark[] | null, width: number, height: number): NormalizedLandmark[] | null {
+  if (!points) return null;
+  return points.map((point) => ({ ...point, x: point.x * width, y: point.y * height, z: point.z * width }));
+}
+
 function distance2d(a: NormalizedLandmark, b: NormalizedLandmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
@@ -91,15 +102,16 @@ function bodyBlock(pose: NormalizedLandmark[] | null): Float32Array {
 }
 
 export function frameFeatures(frame: TrackingFrame): Float32Array {
+  const pose = toMetric(frame.pose, frame.width, frame.height);
   const slots = new Map<string, TrackingFrame["hands"][number]>();
   for (const hand of frame.hands) {
     const label = hand.modelLabel.toLowerCase();
     if ((label === "left" || label === "right") && (!slots.has(label) || hand.score > slots.get(label)!.score)) slots.set(label, hand);
   }
   const output = new Float32Array(FRAME_FEATURES);
-  output.set(handBlock(slots.get("left")?.landmarks ?? null, frame.pose), 0);
-  output.set(handBlock(slots.get("right")?.landmarks ?? null, frame.pose), HAND_FEATURES);
-  output.set(bodyBlock(frame.pose), HAND_FEATURES * 2);
+  output.set(handBlock(toMetric(slots.get("left")?.landmarks ?? null, frame.width, frame.height), pose), 0);
+  output.set(handBlock(toMetric(slots.get("right")?.landmarks ?? null, frame.width, frame.height), pose), HAND_FEATURES);
+  output.set(bodyBlock(pose), HAND_FEATURES * 2);
   return output;
 }
 
@@ -196,6 +208,10 @@ export function prepareSequenceDetailed(frames: FeatureFrame[]): PreparedBrowser
     let nearest = 0;
     for (let index = 1; index < positions.length; index += 1) if (Math.abs(positions[index] - target) < Math.abs(positions[nearest] - target)) nearest = index;
     output.set(active[nearest], targetIndex * FRAME_FEATURES);
+    // The PopSign training clips almost never show a second hand, while a webcam often
+    // shows an idle one. Blank the non-dominant slot so the model sees only what it was
+    // trained on. Diagnostics below still report the raw second-hand presence.
+    output.fill(0, targetIndex * FRAME_FEATURES + HAND_FEATURES, targetIndex * FRAME_FEATURES + HAND_FEATURES * 2);
   }
   const dominantFrames = active.filter((frame) => frame[66] > 0);
   let wristPath = 0;

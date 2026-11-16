@@ -21,6 +21,8 @@ try {
   const frame: TrackingFrame = {
     hands: [{ landmarks, modelLabel: "Right", score: 1 }],
     pose,
+    width: 1280,
+    height: 720,
     ms: 1,
   };
   const pipelineResult = new Promise<number>((resolve, reject) => {

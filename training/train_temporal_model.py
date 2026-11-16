@@ -31,6 +31,18 @@ CONTRACTS = {
     3: {"path": Path("training/landmark-contract.v3.json"), "hand_width": 2 * V3_HAND_FEATURES},
 }
 SPLITS = {"train", "val", "test"}
+# Contract v3 stores each hand's wrist-to-nose x/y offset at these indexes within its
+# hand block. Dropping them isolates v3's aspect correction from the head offsets.
+V3_HEAD_OFFSET_INDEXES = (66, 67)
+
+
+def drop_v3_head_offsets(features: np.ndarray) -> np.ndarray:
+    columns = [
+        block * V3_HAND_FEATURES + index
+        for block in (0, 1)
+        for index in V3_HEAD_OFFSET_INDEXES
+    ]
+    return np.delete(features, columns, axis=-1)
 
 
 class SequenceGRU(nn.Module):
@@ -204,6 +216,11 @@ def main() -> int:
     parser.add_argument("--max-epochs", type=int, default=300)
     parser.add_argument("--patience", type=int, default=35)
     parser.add_argument("--target-accuracy", type=float, default=0.70)
+    parser.add_argument(
+        "--drop-head-offsets",
+        action="store_true",
+        help="Contract v3 only: remove the wrist-to-nose offsets (167 features per frame).",
+    )
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -218,6 +235,13 @@ def main() -> int:
     if manifest["contractSha256"] != current_contract_hash:
         raise RuntimeError("Extraction manifest does not match the current landmark contract")
     examples = load_examples(manifest)
+    hand_width = contract["hand_width"]
+    if args.drop_head_offsets:
+        if int(manifest["contractVersion"]) != 3:
+            raise RuntimeError("--drop-head-offsets applies only to contract v3 manifests")
+        for example in examples:
+            example["features"] = drop_v3_head_offsets(example["features"])
+        hand_width -= 2 * len(V3_HEAD_OFFSET_INDEXES)
     labels = sorted({example["label"] for example in examples if example["split"] == "train"})
     if len(labels) < 2:
         raise RuntimeError("At least two classes are required")
@@ -300,7 +324,7 @@ def main() -> int:
     test = evaluate(model, *split_tensors["test"], labels, loss_function)
     reference = ((raw_train[0] - mean) / scale).astype(np.float32)
     negatives = synthetic_negative_results(
-        model, mean, scale, reference, labels, contract["hand_width"]
+        model, mean, scale, reference, labels, hand_width
     )
     target_passed = test["top1Accuracy"] >= args.target_accuracy
     negative_rejection_passed = all(item["rejected"] for item in negatives.values())
@@ -329,6 +353,7 @@ def main() -> int:
         "seed": args.seed,
         "contractVersion": manifest["contractVersion"],
         "contractSha256": manifest["contractSha256"],
+        "dropHeadOffsets": args.drop_head_offsets,
         "sourceDataset": manifest.get("sourceDataset", {"name": "PopSign ASL v1.0"}),
         "splitCounts": split_counts,
         "configuration": {

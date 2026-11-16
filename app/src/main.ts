@@ -36,6 +36,7 @@ let previewBusy = false;
 let latestDiagnostic: {
   createdAt: string;
   contractVersion: number;
+  variant: string;
   tensorShape: [number, number];
   diagnostics: SequenceDiagnostics;
   tensor: number[];
@@ -81,7 +82,8 @@ const capture = new CaptureController(
       const candidates = await recognizer!.rank(sequence);
       latestDiagnostic = {
         createdAt: new Date().toISOString(),
-        contractVersion: 2,
+        contractVersion: 3,
+        variant: "aspect-only-167",
         tensorShape: [48, 167],
         diagnostics,
         tensor: Array.from(sequence),

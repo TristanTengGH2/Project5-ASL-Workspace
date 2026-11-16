@@ -328,3 +328,23 @@ The ignored `training-artifacts/phase2-source-audit/` output compares canonical
 wrist side, missing-hand rates, body availability, source-frame ranges, and
 standardized feature-group shifts. Its skeleton sheet contains landmarks only,
 not source-video frames.
+
+## Browser model (aspect-only v3)
+
+The model served by the app is the contract-v3 tensor without the wrist-to-nose
+offsets (167 features per frame). Reproduce it from the repository root:
+
+```sh
+PYTHONPATH=training .venv/bin/python training/train_temporal_model.py \
+  --manifest training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json \
+  --output training-artifacts/popsign-ten-sign-gru-v3-aspect-only --drop-head-offsets
+PYTHONPATH=training .venv/bin/python training/export_temporal_onnx.py \
+  --checkpoint training-artifacts/popsign-ten-sign-gru-v3-aspect-only/gru-model.pt \
+  --manifest training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json \
+  --output app/public/models/sign-recognizer.onnx \
+  --metadata app/public/models/sign-recognizer.json --drop-head-offsets
+```
+
+The browser preprocessor also zeroes the non-dominant hand block, because the
+PopSign training clips almost never show a second hand. Model files stay
+Git-ignored.

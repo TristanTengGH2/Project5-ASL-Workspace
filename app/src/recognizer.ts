@@ -34,7 +34,7 @@ export class Recognizer {
     if (!catalogResponse.ok) throw new Error(`sign catalog HTTP ${catalogResponse.status}`);
     const metadata = await modelResponse.json() as ModelMetadata;
     const catalog = await catalogResponse.json() as SignCatalog;
-    if (metadata.mean.length !== FRAME_FEATURES || metadata.scale.length !== FRAME_FEATURES) throw new Error("model metadata does not match contract v2");
+    if (metadata.mean.length !== FRAME_FEATURES || metadata.scale.length !== FRAME_FEATURES) throw new Error("model metadata does not match the 167-feature aspect-correct contract");
     const signs = new Map(catalog.signs.filter((sign) => sign.status === "supported").map((sign) => [sign.displayGloss, sign]));
     const missing = metadata.labels.filter((label) => !signs.has(label));
     if (missing.length || signs.size !== metadata.labels.length) throw new Error(`model/catalog vocabulary mismatch${missing.length ? `: ${missing.join(", ")}` : ""}`);

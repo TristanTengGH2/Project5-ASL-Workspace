@@ -19,6 +19,9 @@ export interface HandFrame {
 export interface TrackingFrame {
   hands: HandFrame[];
   pose: NormalizedLandmark[] | null;
+  /** Source image size in pixels; landmarks are normalized per axis, so geometry needs both. */
+  width: number;
+  height: number;
   /** Time spent in the tracker for this frame. */
   ms: number;
 }
@@ -56,6 +59,6 @@ export class Tracker {
     const pose = withPose
       ? (this.pose.detectForVideo(video, timestampMs).landmarks[0] ?? null)
       : null;
-    return { hands, pose, ms: performance.now() - start };
+    return { hands, pose, width: video.videoWidth, height: video.videoHeight, ms: performance.now() - start };
   }
 }
