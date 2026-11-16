@@ -34,6 +34,7 @@ SPLITS = {"train", "val", "test"}
 # Contract v3 stores each hand's wrist-to-nose x/y offset at these indexes within its
 # hand block. Dropping them isolates v3's aspect correction from the head offsets.
 V3_HEAD_OFFSET_INDEXES = (66, 67)
+BODY_BLOCK_WIDTH = 11 * 3
 
 
 def drop_v3_head_offsets(features: np.ndarray) -> np.ndarray:
@@ -43,6 +44,16 @@ def drop_v3_head_offsets(features: np.ndarray) -> np.ndarray:
         for index in V3_HEAD_OFFSET_INDEXES
     ]
     return np.delete(features, columns, axis=-1)
+
+
+def drop_body_anchors(features: np.ndarray) -> np.ndarray:
+    """Remove the upper-body anchor block (the last 33 columns of the 167-wide frame).
+
+    The anchors carry head, ear, mouth and elbow position relative to the shoulders, which
+    a live webcam setup shifts without any change in the sign. Shoulder anchors are
+    constant by construction, so the whole block is removed.
+    """
+    return features[..., :-BODY_BLOCK_WIDTH]
 
 
 class SequenceGRU(nn.Module):
@@ -221,7 +232,14 @@ def main() -> int:
         action="store_true",
         help="Contract v3 only: remove the wrist-to-nose offsets (167 features per frame).",
     )
+    parser.add_argument(
+        "--drop-body-anchors",
+        action="store_true",
+        help="Remove the upper-body anchor block; requires --drop-head-offsets (134 features).",
+    )
     args = parser.parse_args()
+    if args.drop_body_anchors and not args.drop_head_offsets:
+        parser.error("--drop-body-anchors requires --drop-head-offsets")
 
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -242,6 +260,9 @@ def main() -> int:
         for example in examples:
             example["features"] = drop_v3_head_offsets(example["features"])
         hand_width -= 2 * len(V3_HEAD_OFFSET_INDEXES)
+        if args.drop_body_anchors:
+            for example in examples:
+                example["features"] = drop_body_anchors(example["features"])
     labels = sorted({example["label"] for example in examples if example["split"] == "train"})
     if len(labels) < 2:
         raise RuntimeError("At least two classes are required")
@@ -354,6 +375,7 @@ def main() -> int:
         "contractVersion": manifest["contractVersion"],
         "contractSha256": manifest["contractSha256"],
         "dropHeadOffsets": args.drop_head_offsets,
+        "dropBodyAnchors": args.drop_body_anchors,
         "sourceDataset": manifest.get("sourceDataset", {"name": "PopSign ASL v1.0"}),
         "splitCounts": split_counts,
         "configuration": {

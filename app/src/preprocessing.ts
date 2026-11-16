@@ -1,11 +1,9 @@
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import type { TrackingFrame } from "./tracker";
 
-export const FRAME_FEATURES = 167;
+export const FRAME_FEATURES = 134;
 export const NORMALIZED_FRAMES = 48;
 const HAND_FEATURES = 67;
-const BODY_ANCHORS = [0, 2, 5, 7, 8, 9, 10, 11, 12, 13, 14] as const;
-const BODY_PAIRS = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]] as const;
 
 export interface FeatureFrame {
   timestampMs: number;
@@ -24,7 +22,6 @@ export interface SequenceDiagnostics {
   dominantHandPresenceRate: number;
   nonDominantHandPresenceRate: number;
   twoHandPresenceRate: number;
-  bodyAnchorPresenceRate: number;
   dominantWristPath: number;
 }
 
@@ -83,24 +80,6 @@ function handBlock(hand: NormalizedLandmark[] | null, pose: NormalizedLandmark[]
   return output;
 }
 
-function bodyBlock(pose: NormalizedLandmark[] | null): Float32Array {
-  const output = new Float32Array(BODY_ANCHORS.length * 3);
-  if (!pose || !shouldersReady(pose)) return output;
-  const left = pose[11];
-  const right = pose[12];
-  const originX = (left.x + right.x) / 2;
-  const originY = (left.y + right.y) / 2;
-  const scale = distance2d(left, right);
-  BODY_ANCHORS.forEach((poseIndex, outputIndex) => {
-    const point = pose[poseIndex];
-    if (!visiblePosePoint(point)) return;
-    output[outputIndex * 3] = (point.x - originX) / scale;
-    output[outputIndex * 3 + 1] = (point.y - originY) / scale;
-    output[outputIndex * 3 + 2] = 1;
-  });
-  return output;
-}
-
 export function frameFeatures(frame: TrackingFrame): Float32Array {
   const pose = toMetric(frame.pose, frame.width, frame.height);
   const slots = new Map<string, TrackingFrame["hands"][number]>();
@@ -111,7 +90,6 @@ export function frameFeatures(frame: TrackingFrame): Float32Array {
   const output = new Float32Array(FRAME_FEATURES);
   output.set(handBlock(toMetric(slots.get("left")?.landmarks ?? null, frame.width, frame.height), pose), 0);
   output.set(handBlock(toMetric(slots.get("right")?.landmarks ?? null, frame.width, frame.height), pose), HAND_FEATURES);
-  output.set(bodyBlock(pose), HAND_FEATURES * 2);
   return output;
 }
 
@@ -129,25 +107,15 @@ function canonicalize(frames: FeatureFrame[]): { features: Float32Array[]; domin
   const features = frames.map(({ features: source }) => {
     const left = source.slice(0, HAND_FEATURES);
     const right = source.slice(HAND_FEATURES, HAND_FEATURES * 2);
-    const body = source.slice(HAND_FEATURES * 2);
     let dominantHand = right;
     let otherHand = left;
     if (dominant === "left") {
       dominantHand = mirrorHand(left);
       otherHand = mirrorHand(right);
-      for (let index = 0; index < BODY_ANCHORS.length; index += 1) body[index * 3] *= -1;
-      for (const [leftIndex, rightIndex] of BODY_PAIRS) {
-        for (let channel = 0; channel < 3; channel += 1) {
-          const first = leftIndex * 3 + channel;
-          const second = rightIndex * 3 + channel;
-          [body[first], body[second]] = [body[second], body[first]];
-        }
-      }
     }
     const output = new Float32Array(FRAME_FEATURES);
     output.set(dominantHand, 0);
     output.set(otherHand, HAND_FEATURES);
-    output.set(body, HAND_FEATURES * 2);
     return output;
   });
   return { features, dominant };
@@ -222,11 +190,6 @@ export function prepareSequenceDetailed(frames: FeatureFrame[]): PreparedBrowser
     );
   }
   const rate = (matches: number) => matches / active.length;
-  const bodyPresent = active.reduce((total, frame) => {
-    let present = 0;
-    for (let anchor = 0; anchor < BODY_ANCHORS.length; anchor += 1) present += frame[HAND_FEATURES * 2 + anchor * 3 + 2] > 0 ? 1 : 0;
-    return total + present / BODY_ANCHORS.length;
-  }, 0) / active.length;
   return {
     tensor: output,
     diagnostics: {
@@ -241,7 +204,6 @@ export function prepareSequenceDetailed(frames: FeatureFrame[]): PreparedBrowser
       dominantHandPresenceRate: rate(dominantFrames.length),
       nonDominantHandPresenceRate: rate(active.filter((frame) => frame[HAND_FEATURES + 66] > 0).length),
       twoHandPresenceRate: rate(active.filter((frame) => frame[66] > 0 && frame[HAND_FEATURES + 66] > 0).length),
-      bodyAnchorPresenceRate: bodyPresent,
       dominantWristPath: wristPath,
     },
   };

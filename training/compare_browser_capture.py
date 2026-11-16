@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from train_temporal_model import SequenceGRU, drop_v3_head_offsets, load_examples
+from train_temporal_model import SequenceGRU, drop_body_anchors, drop_v3_head_offsets, load_examples
 
 
 BODY_ANCHORS = 11
@@ -27,7 +27,7 @@ def tensor_metrics(tensor: np.ndarray, hand_features: int) -> dict:
         if len(detected) > 1
         else 0.0
     )
-    body_presence = tensor[:, body_offset + 2 :: 3]
+    body_presence = tensor[:, body_offset + 2 :: 3] if tensor.shape[1] > body_offset else np.zeros((1, 1))
     return {
         "dominantPresenceRate": float(dominant.mean()),
         "nonDominantPresenceRate": float(non_dominant.mean()),
@@ -63,7 +63,7 @@ def main() -> int:
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path("training-artifacts/popsign-ten-sign-gru-v3-aspect-only/gru-model.pt"),
+        default=Path("training-artifacts/popsign-ten-sign-gru-v3-hands-only/gru-model.pt"),
     )
     parser.add_argument(
         "--manifest",
@@ -78,13 +78,15 @@ def main() -> int:
     capture = json.loads(args.capture.read_text(encoding="utf-8"))
     contract_version = int(capture["contractVersion"])
     # Aspect-only captures are v3 geometry without head offsets (67 values per hand).
-    aspect_only = capture.get("variant") == "aspect-only-167"
+    hands_only = capture.get("variant") == "hands-only-134"
+    aspect_only = hands_only or capture.get("variant") == "aspect-only-167"
     hand_features = 67 if aspect_only else {2: 67, 3: 69}.get(contract_version)
     if hand_features is None:
         raise ValueError(f"Unsupported capture contract v{contract_version}")
     shape = tuple(capture["tensorShape"])
     tensor = np.asarray(capture["tensor"], dtype=np.float32).reshape(shape)
-    if shape != (48, hand_features * 2 + BODY_ANCHORS * 3) or not np.isfinite(tensor).all():
+    expected_width = hand_features * 2 + (0 if hands_only else BODY_ANCHORS * 3)
+    if shape != (48, expected_width) or not np.isfinite(tensor).all():
         raise ValueError(f"Unexpected or non-finite tensor shape: {shape}")
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
@@ -111,6 +113,8 @@ def main() -> int:
     if aspect_only and int(manifest["contractVersion"]) == 3:
         for item in examples:
             item["features"] = drop_v3_head_offsets(item["features"])
+            if hands_only:
+                item["features"] = drop_body_anchors(item["features"])
     standardized_examples = [
         (item, ((item["features"] - mean) / scale).astype(np.float32)) for item in examples
     ]

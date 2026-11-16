@@ -83,8 +83,8 @@ const capture = new CaptureController(
       latestDiagnostic = {
         createdAt: new Date().toISOString(),
         contractVersion: 3,
-        variant: "aspect-only-167",
-        tensorShape: [48, 167],
+        variant: "hands-only-134",
+        tensorShape: [48, 134],
         diagnostics,
         tensor: Array.from(sequence),
         browserRanking: candidates,

@@ -345,6 +345,31 @@ PYTHONPATH=training .venv/bin/python training/export_temporal_onnx.py \
   --metadata app/public/models/sign-recognizer.json --drop-head-offsets
 ```
 
+The current browser model also removes the upper-body anchor block. Add
+`--drop-body-anchors` to both commands and use the
+`popsign-ten-sign-gru-v3-hands-only` output directory to reproduce it
+(134 features per frame).
+
 The browser preprocessor also zeroes the non-dominant hand block, because the
 PopSign training clips almost never show a second hand. Model files stay
 Git-ignored.
+
+## Replaying videos through the browser pipeline
+
+With the dev server running (`npm run dev` in `app/`), this plays the clips of one
+split through the real browser tracker, preprocessing and model in headless Chrome,
+stepping frame by frame with the CPU tracker delegate:
+
+```sh
+cd app
+node scripts/replay-videos.mjs training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json \
+  ../training-artifacts/browser-replay/hands-only-test.json test
+cd ..
+.venv/bin/python training/compare_browser_replay.py \
+  training-artifacts/browser-replay/hands-only-test.json \
+  training-artifacts/popsign-ten-sign-gru-v3-hands-only/evaluation.json
+```
+
+Videos are served only to the local headless browser from the git-ignored
+`datasets/` directory and are never copied into the app. The replay page
+(`video-replay.html`) is not part of the production build.

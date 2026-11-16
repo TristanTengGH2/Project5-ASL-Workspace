@@ -12,7 +12,7 @@ import onnx
 import onnxruntime as ort
 import torch
 
-from train_temporal_model import SequenceGRU, drop_v3_head_offsets, load_examples
+from train_temporal_model import SequenceGRU, drop_body_anchors, drop_v3_head_offsets, load_examples
 
 
 def main() -> int:
@@ -25,6 +25,11 @@ def main() -> int:
         "--drop-head-offsets",
         action="store_true",
         help="Contract v3 manifests only; must match how the checkpoint was trained.",
+    )
+    parser.add_argument(
+        "--drop-body-anchors",
+        action="store_true",
+        help="Must match how the checkpoint was trained (requires --drop-head-offsets).",
     )
     args = parser.parse_args()
 
@@ -60,6 +65,8 @@ def main() -> int:
     if args.drop_head_offsets:
         for item in tests:
             item["features"] = drop_v3_head_offsets(item["features"])
+            if args.drop_body_anchors:
+                item["features"] = drop_body_anchors(item["features"])
     inputs = np.stack([(item["features"] - mean) / scale for item in tests]).astype(np.float32)
     with torch.no_grad():
         torch_logits = model(torch.from_numpy(inputs)).numpy()
@@ -90,6 +97,7 @@ def main() -> int:
         "contractVersion": manifest["contractVersion"],
         "contractSha256": manifest["contractSha256"],
         "dropHeadOffsets": args.drop_head_offsets,
+        "dropBodyAnchors": args.drop_body_anchors,
         "resultPolicy": "not-sure-with-ranked-possible-matches",
         "parity": {
             "heldOutExamples": len(tests),

@@ -30,17 +30,17 @@ export class Tracker {
   private hands!: HandLandmarker;
   private pose!: PoseLandmarker;
 
-  static async create(): Promise<Tracker> {
+  static async create(delegate: "GPU" | "CPU" = "GPU"): Promise<Tracker> {
     const t = new Tracker();
     const base = import.meta.env.BASE_URL;
     const vision = await FilesetResolver.forVisionTasks(`${base}wasm`);
     t.hands = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: `${base}models/hand_landmarker.task`, delegate: "GPU" },
+      baseOptions: { modelAssetPath: `${base}models/hand_landmarker.task`, delegate },
       runningMode: "VIDEO",
       numHands: 2,
     });
     t.pose = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: `${base}models/pose_landmarker_lite.task`, delegate: "GPU" },
+      baseOptions: { modelAssetPath: `${base}models/pose_landmarker_lite.task`, delegate },
       runningMode: "VIDEO",
       numPoses: 1,
     });
