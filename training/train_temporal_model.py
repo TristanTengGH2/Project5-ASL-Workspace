@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train one compact GRU feasibility model on contract-v1 or contract-v2 landmark sequences."""
+"""Train one compact GRU feasibility model on versioned landmark sequences."""
 
 from __future__ import annotations
 
@@ -13,7 +13,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from landmark_contract_v2 import HAND_FEATURES
+from landmark_contract_v2 import HAND_FEATURES as V2_HAND_FEATURES
+from landmark_contract_v3 import HAND_FEATURES as V3_HAND_FEATURES
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -26,7 +27,8 @@ DEFAULT_OUTPUT = Path("training-artifacts/phase2-five-sign-gru")
 # block (both hands) at the start of each frame; the rest of the frame is body anchors.
 CONTRACTS = {
     1: {"path": Path("training/landmark-contract.v1.json"), "hand_width": 136},
-    2: {"path": Path("training/landmark-contract.v2.json"), "hand_width": 2 * HAND_FEATURES},
+    2: {"path": Path("training/landmark-contract.v2.json"), "hand_width": 2 * V2_HAND_FEATURES},
+    3: {"path": Path("training/landmark-contract.v3.json"), "hand_width": 2 * V3_HAND_FEATURES},
 }
 SPLITS = {"train", "val", "test"}
 

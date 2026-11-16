@@ -94,7 +94,11 @@ def main() -> int:
         tensor_path = Path(item["tensor"])
         with np.load(tensor_path) as payload:
             tensor = payload["features"]
-        if tensor.shape != (48, 167) or not np.isfinite(tensor).all():
+        expected_shape = tuple(item.get("tensorShape", ()))
+        if not expected_shape:
+            feature_count = {2: 167, 3: 171}.get(extraction["contractVersion"])
+            expected_shape = (48, feature_count) if feature_count else ()
+        if tensor.shape != expected_shape or not np.isfinite(tensor).all():
             tensor_failures.append(item["video"])
         split, sign = split_and_sign(item["video"])
         if item["activeDominantHandDetectionRate"] < args.weak_active_rate:

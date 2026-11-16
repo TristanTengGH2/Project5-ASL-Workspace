@@ -42,6 +42,36 @@ presence. The resulting frame has 167 features. A browser quality layer may
 still use tracker confidence, but recognition may not learn source-specific
 confidence values.
 
+## Experimental landmark contract v3
+
+`landmark-contract.v3.json` fixes the portrait-versus-landscape geometry defect
+found during the first live browser scans. Before measuring distance, normalized
+`x` and MediaPipe `z` are multiplied by image width and normalized `y` by image
+height. Each hand also stores the wrist's `x/y` offset from the visible nose,
+divided by shoulder width. The result is 171 values per frame and a fixed
+`48 x 171` sequence. The nose is a broad head-location reference, not a facial
+expression feature.
+
+The first fixed ten-sign v3 run scored 64% validation and 68% on the untouched
+50-clip test set, below the approved 70% gate. It was therefore not exported to
+the browser. V2 remains the deployed contract while the Developer decides
+whether to revise v3, narrow the vocabulary, or accept a different gate.
+
+Run the v2 and v3 regression checks from the repository root with:
+
+```sh
+PYTHONPATH=training .venv/bin/python -m unittest \
+  training.test_landmark_contract_v2 training.test_landmark_contract_v3
+```
+
+Extract a v3 dataset into ignored local storage with:
+
+```sh
+PYTHONPATH=training .venv/bin/python training/extract_landmarks.py \
+  <video-directory> --contract-version 3 --handedness-mode keep \
+  --output training-artifacts/<run-name>
+```
+
 The Developer provisionally approved 48 frames. It is the only tested candidate
 that passed the motion-retention and hand-presence thresholds after both source
 adapters emitted trimmed v2 active intervals. Reproduce the comparison with:

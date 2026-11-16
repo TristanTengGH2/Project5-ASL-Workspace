@@ -16,15 +16,18 @@ import mediapipe as mp
 import numpy as np
 
 import landmark_contract_v2 as v2
+import landmark_contract_v3 as v3
 
 
 CONTRACT_PATHS = {
     1: Path("training/landmark-contract.v1.json"),
     2: Path("training/landmark-contract.v2.json"),
+    3: Path("training/landmark-contract.v3.json"),
 }
 DEFAULT_OUTPUTS = {
     1: Path("training-artifacts/phase2-extraction"),
     2: Path("training-artifacts/phase2-v2-extraction"),
+    3: Path("training-artifacts/phase2-v3-extraction"),
 }
 HAND_MODEL = Path("app/public/models/hand_landmarker.task")
 POSE_MODEL = Path("app/public/models/pose_landmarker_lite.task")
@@ -314,7 +317,7 @@ def extract_video(
     }
 
 
-def extract_video_v2(
+def extract_video_versioned(
     video_path: Path,
     hand_landmarker: object,
     pose_landmarker: object,
@@ -322,6 +325,7 @@ def extract_video_v2(
     output_root: Path,
     handedness_mode: str,
     maximum_side: int,
+    contract_module: object,
 ) -> dict:
     capture = cv2.VideoCapture(str(video_path))
     if not capture.isOpened():
@@ -364,8 +368,17 @@ def extract_video_v2(
                     slots[label] = (landmarks, float(category.score))
             left = landmark_array(slots["left"][0], 21) if "left" in slots else None
             right = landmark_array(slots["right"][0], 21) if "right" in slots else None
-            features = v2.frame_features(left, right, pose, pose_present)
-            _, shoulder_scale = v2.shoulder_reference(pose, pose_present)
+            if contract_module is v3:
+                height, width = tracked.shape[:2]
+                features = v3.frame_features(
+                    left, right, pose, pose_present, width, height
+                )
+                _, shoulder_scale = v3.shoulder_reference(
+                    pose, pose_present, width, height
+                )
+            else:
+                features = v2.frame_features(left, right, pose, pose_present)
+                _, shoulder_scale = v2.shoulder_reference(pose, pose_present)
             overlay = draw_overlay(
                 bgr, hands_result.hand_landmarks, labels, pose_landmarks, anchor_indexes
             )
@@ -386,14 +399,17 @@ def extract_video_v2(
 
     raw_features = np.stack([frame.features for frame in frames])
     source_positions = np.array([frame.timestamp_ms for frame in frames], dtype=np.float64)
-    prepared = v2.prepare_sequence(raw_features, source_positions)
+    prepared = contract_module.prepare_sequence(raw_features, source_positions)
     count = contract["sequence"]["normalizedFrameCount"]
-    tensor, selected_indexes = v2.resample_nearest(
+    tensor, selected_indexes = contract_module.resample_nearest(
         prepared.features, prepared.source_positions, count
     )
     expected_shape = tuple(contract["sequence"]["tensorShape"])
     if tensor.shape != expected_shape or not np.isfinite(tensor).all():
-        raise RuntimeError(f"Invalid v2 tensor shape or values for {video_path}: {tensor.shape}")
+        raise RuntimeError(
+            f"Invalid v{contract['contractVersion']} tensor shape or values "
+            f"for {video_path}: {tensor.shape}"
+        )
 
     stem = video_path.stem
     tensor_dir = output_root / "tensors"
@@ -432,7 +448,9 @@ def extract_video_v2(
         "activeFrames": len(prepared.features),
         "activeStartMs": float(prepared.source_positions[0]),
         "activeEndMs": float(prepared.source_positions[-1]),
-        "activeDominantHandDetectionRate": float(np.mean(prepared.features[:, 66] > 0)),
+        "activeDominantHandDetectionRate": float(
+            np.mean(prepared.features[:, contract_module.PRESENCE_INDEX] > 0)
+        ),
         "fps": fps,
         "handDetectionFrames": hand_frames,
         "handDetectionRate": hand_frames / len(frames),
@@ -469,7 +487,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("inputs", nargs="+", help="MP4 files or directories")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--contract-version", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--contract-version", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--handedness-mode", choices=("keep", "swap"), required=True)
     parser.add_argument("--maximum-side", type=int, default=960)
     parser.add_argument("--hand-detection-confidence", type=float, default=0.4)
@@ -552,10 +570,28 @@ def main() -> int:
         try:
             with vision.HandLandmarker.create_from_options(hand_options) as hands:
                 with vision.PoseLandmarker.create_from_options(pose_options) as pose:
-                    extractor = extract_video_v2 if args.contract_version == 2 else extract_video
-                    report = extractor(
-                        video, hands, pose, contract, output, args.handedness_mode, args.maximum_side
-                    )
+                    if args.contract_version == 1:
+                        report = extract_video(
+                            video,
+                            hands,
+                            pose,
+                            contract,
+                            output,
+                            args.handedness_mode,
+                            args.maximum_side,
+                        )
+                    else:
+                        contract_module = v3 if args.contract_version == 3 else v2
+                        report = extract_video_versioned(
+                            video,
+                            hands,
+                            pose,
+                            contract,
+                            output,
+                            args.handedness_mode,
+                            args.maximum_side,
+                            contract_module,
+                        )
         except (OSError, RuntimeError, ValueError) as error:
             if not args.continue_on_error:
                 raise

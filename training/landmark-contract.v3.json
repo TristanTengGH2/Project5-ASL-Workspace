@@ -1,0 +1,77 @@
+{
+  "contractVersion": 3,
+  "status": "approved-aspect-corrected-browser-parity-checkpoint",
+  "tracker": {
+    "family": "MediaPipe landmarks with source-specific adapters",
+    "modelHashesRequiredForTrainingRun": true,
+    "confidencePolicy": "Keep tracker confidence in quality metadata; do not use continuous confidence as a recognition feature."
+  },
+  "coordinates": {
+    "sourceOrigin": "top-left",
+    "xDirection": "right",
+    "yDirection": "down",
+    "metricRule": "Before distances or normalization, map normalized x to x*imageWidth, y to y*imageHeight, and MediaPipe z to z*imageWidth. This removes portrait-versus-landscape x/y distortion.",
+    "mirrorPolicy": "Apply one explicit source adapter before canonical dominance. PopSign uses keep.",
+    "depthPolicy": "Keep local hand z. Center visible shoulder-normalized wrist z on its active-interval median."
+  },
+  "hands": {
+    "slots": ["dominant", "non-dominant"],
+    "dominanceNormalization": {
+      "selection": "The detected hand present in the most active-interval frames is dominant; ties keep the right hand as dominant.",
+      "canonicalSide": "right",
+      "leftDominantRule": "Reflect x coordinates, exchange paired upper-body anchors, and place the detected left hand in the dominant slot."
+    },
+    "landmarkOrder": ["wrist", "thumb CMC", "thumb MCP", "thumb IP", "thumb tip", "index MCP", "index PIP", "index DIP", "index tip", "middle MCP", "middle PIP", "middle DIP", "middle tip", "ring MCP", "ring PIP", "ring DIP", "ring tip", "pinky MCP", "pinky PIP", "pinky DIP", "pinky tip"],
+    "shapeNormalization": {
+      "origin": "wrist",
+      "scale": "mean aspect-corrected 2D distance from wrist to index MCP, middle MCP, and pinky MCP",
+      "rotation": "none; preserve palm and finger orientation"
+    },
+    "featuresPerSlot": {
+      "localLandmarksXyz": 63,
+      "shoulderRelativeWristXyz": 3,
+      "headRelativeWristXy": 2,
+      "present": 1,
+      "total": 69
+    }
+  },
+  "body": {
+    "headReference": { "index": 0, "name": "nose", "displayName": "head reference" },
+    "anchorOrder": [
+      { "index": 0, "name": "nose" }, { "index": 2, "name": "left eye" },
+      { "index": 5, "name": "right eye" }, { "index": 7, "name": "left ear" },
+      { "index": 8, "name": "right ear" }, { "index": 9, "name": "left mouth corner" },
+      { "index": 10, "name": "right mouth corner" }, { "index": 11, "name": "left shoulder" },
+      { "index": 12, "name": "right shoulder" }, { "index": 13, "name": "left elbow" },
+      { "index": 14, "name": "right elbow" }
+    ],
+    "normalization": {
+      "origin": "aspect-corrected shoulder midpoint",
+      "scale": "aspect-corrected 2D shoulder width",
+      "featuresPerAnchor": ["x", "y", "present"],
+      "headOffset": "Each visible hand wrist also stores x/y offset from the visible nose, divided by shoulder width.",
+      "missingRule": "Coordinates are zero only with present zero."
+    },
+    "excluded": ["hips", "body z"]
+  },
+  "sequence": {
+    "raw": "Retain increasing timestamps and every stable detailed hand result before normalization.",
+    "activeInterval": {
+      "rule": "Bridge at most three missing dominant-hand frames, prefer the densest sustained run, and retain two context frames.",
+      "browserRule": "A hands-free countdown begins capture after readiness."
+    },
+    "candidateNormalizedFrameCounts": [16, 24, 32, 48],
+    "normalizedFrameCount": 48,
+    "resampling": "Nearest observed source frame by timestamp across the active interval.",
+    "missingValues": "Use zero coordinates only with explicit zero presence.",
+    "frameFeatureCount": 171,
+    "frameFeatureLayout": "dominant hand 69, non-dominant hand 69, then 11 upper-body anchors x 3",
+    "tensorShape": [48, 171]
+  },
+  "requirements": {
+    "handChannels": "Required for every supported sign.",
+    "bodyChannels": "Nose and shoulders are required for head-relative and body-relative location during scans.",
+    "faceExpressionChannels": "Not included; the nose is a positional head reference, not facial-expression recognition.",
+    "deviceModes": "Reduced pose cadence may reuse the latest anchors but never reduces hand landmark count."
+  }
+}

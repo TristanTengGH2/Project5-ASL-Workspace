@@ -13,21 +13,21 @@ import torch
 from train_temporal_model import SequenceGRU, load_examples
 
 
-HAND_FEATURES = 67
-BODY_OFFSET = HAND_FEATURES * 2
 BODY_ANCHORS = 11
 
 
-def tensor_metrics(tensor: np.ndarray) -> dict:
-    dominant = tensor[:, 66] > 0
-    non_dominant = tensor[:, HAND_FEATURES + 66] > 0
+def tensor_metrics(tensor: np.ndarray, hand_features: int) -> dict:
+    presence_index = hand_features - 1
+    body_offset = hand_features * 2
+    dominant = tensor[:, presence_index] > 0
+    non_dominant = tensor[:, hand_features + presence_index] > 0
     detected = tensor[dominant]
     wrist_path = (
         float(np.linalg.norm(np.diff(detected[:, 63:65], axis=0), axis=1).sum())
         if len(detected) > 1
         else 0.0
     )
-    body_presence = tensor[:, BODY_OFFSET + 2 :: 3]
+    body_presence = tensor[:, body_offset + 2 :: 3]
     return {
         "dominantPresenceRate": float(dominant.mean()),
         "nonDominantPresenceRate": float(non_dominant.mean()),
@@ -48,8 +48,8 @@ def summarize(values: list[float]) -> dict:
     }
 
 
-def summarize_class(examples: list[dict]) -> dict:
-    rows = [tensor_metrics(item["features"]) for item in examples]
+def summarize_class(examples: list[dict], hand_features: int) -> dict:
+    rows = [tensor_metrics(item["features"], hand_features) for item in examples]
     return {
         key: summarize([row[key] for row in rows if row[key] is not None])
         for key in rows[0]
@@ -63,23 +63,27 @@ def main() -> int:
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path("training-artifacts/popsign-ten-sign-gru/gru-model.pt"),
+        default=Path("training-artifacts/popsign-ten-sign-gru-v3/gru-model.pt"),
     )
     parser.add_argument(
         "--manifest",
         type=Path,
         default=Path(
-            "training-artifacts/popsign-ten-sign-v2-extraction/extraction-manifest.json"
+            "training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json"
         ),
     )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
     capture = json.loads(args.capture.read_text(encoding="utf-8"))
+    contract_version = int(capture["contractVersion"])
+    hand_features = {2: 67, 3: 69}.get(contract_version)
+    if hand_features is None:
+        raise ValueError(f"Unsupported capture contract v{contract_version}")
     shape = tuple(capture["tensorShape"])
     tensor = np.asarray(capture["tensor"], dtype=np.float32).reshape(shape)
-    if shape != (48, 167) or not np.isfinite(tensor).all():
-        raise ValueError(f"Expected one finite 48 x 167 tensor, got {shape}")
+    if shape != (48, hand_features * 2 + BODY_ANCHORS * 3) or not np.isfinite(tensor).all():
+        raise ValueError(f"Unexpected or non-finite tensor shape: {shape}")
 
     checkpoint = torch.load(args.checkpoint, map_location="cpu", weights_only=False)
     labels = list(checkpoint["labels"])
@@ -88,7 +92,7 @@ def main() -> int:
     mean = np.asarray(checkpoint["mean"], dtype=np.float32)
     scale = np.asarray(checkpoint["scale"], dtype=np.float32)
     standardized = ((tensor - mean) / scale).astype(np.float32)
-    model = SequenceGRU(167, int(checkpoint["hiddenSize"]), len(labels), 0.0)
+    model = SequenceGRU(shape[1], int(checkpoint["hiddenSize"]), len(labels), 0.0)
     model.load_state_dict(checkpoint["stateDict"])
     model.eval()
     with torch.no_grad():
@@ -140,7 +144,7 @@ def main() -> int:
         "capture": str(args.capture),
         "expected": args.expected,
         "browserDiagnostics": capture["diagnostics"],
-        "normalizedCaptureMetrics": tensor_metrics(tensor),
+        "normalizedCaptureMetrics": tensor_metrics(tensor, hand_features),
         "inferenceParity": {
             "rankingLabelsMatch": [item["label"] for item in browser_ranking]
             == [item["label"] for item in python_ranking],
@@ -154,7 +158,9 @@ def main() -> int:
         "nearestTrainingExamples": nearest,
         "centroidRanking": centroid_ranking,
         "trainingReferenceMetrics": {
-            label: summarize_class([item for item in examples if item["label"] == label])
+            label: summarize_class(
+                [item for item in examples if item["label"] == label], hand_features
+            )
             for label in relevant_labels
         },
         "interpretationLimits": [
