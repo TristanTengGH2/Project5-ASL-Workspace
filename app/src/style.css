@@ -135,6 +135,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--coral); out
 .check-note { margin: 0.5rem 0 0; color: #b9c5d0; font-size: 0.75rem; }
 
 .results-overlay li { align-items: center; }
+.results-overlay .lookalike-note { margin: 0.7rem 0 0; padding: 0.5rem 0.65rem; border-left: 3px solid #f7c948; background: rgba(247, 201, 72, 0.12); color: #fff; font-size: 0.78rem; line-height: 1.4; }
+.results-overlay .lookalike-note[hidden] { display: none; }
 .guide-link { padding: 0.2rem 0.6rem; border-width: 1px; font-size: 0.72rem; box-shadow: none; text-transform: none; }
 
 /* How-to-sign reference dialog */

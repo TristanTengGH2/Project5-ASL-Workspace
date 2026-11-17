@@ -3,6 +3,7 @@ import { CaptureController } from "./capture-controller";
 import { Overlay } from "./overlay";
 import type { SequenceDiagnostics } from "./preprocessing";
 import { Recognizer, type RankedCandidate } from "./recognizer";
+import { loadSignFacts, lookAlikeMessage } from "./facts";
 import { SignGuide } from "./sign-guide";
 import { Tracker, type TrackingFrame } from "./tracker";
 
@@ -17,6 +18,7 @@ const showLabels = $<HTMLInputElement>("show-labels");
 const statusEl = $("status");
 const resultsEl = $("results");
 const candidateList = $("candidate-list");
+const lookAlikeNote = $("lookalike-note");
 const scanFeedback = $("scan-feedback");
 const scanPhase = $("scan-phase");
 const liveMatch = $("live-match");
@@ -82,6 +84,12 @@ function showCandidates(candidates: RankedCandidate[]): void {
     return item;
   }));
   resultsEl.hidden = false;
+  lookAlikeNote.hidden = true;
+  void loadSignFacts().then((facts) => {
+    const message = lookAlikeMessage(candidates.slice(0, 3), facts.signs);
+    lookAlikeNote.textContent = message ?? "";
+    lookAlikeNote.hidden = !message;
+  }).catch(() => { lookAlikeNote.hidden = true; });
 }
 
 const capture = new CaptureController(

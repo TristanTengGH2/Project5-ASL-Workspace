@@ -10,7 +10,8 @@
     "dev": "npm run prepare:catalog && vite",
     "build": "npm run prepare:catalog && tsc && vite build",
     "preview": "vite preview",
-    "test:reference": "node tests/reference-take.test.mts"
+    "test:reference": "node tests/reference-take.test.mts",
+    "test": "node tests/reference-take.test.mts && node tests/facts.test.mts"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

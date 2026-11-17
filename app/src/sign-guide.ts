@@ -2,25 +2,11 @@
 // supported sign (no video, no face) plus verified facts from ASL-LEX. See spec.md
 // ("How to sign" reference) for scope and attribution.
 
+import { loadSignFacts, lookAlikesOf, type FactsFile, type SignFacts } from "./facts";
 import { drawBodyScene, drawHandScene, FINGERS, sceneExtent, type ReferenceMotion } from "./reference-draw";
 
 interface SignReference extends ReferenceMotion { gloss: string; provenance?: "popsign" | "recorded" }
 interface ReferenceFile { frames: number; attribution: string; recordedAttribution?: string; signs: Record<string, SignReference> }
-interface SignFacts {
-  hands: "one" | "two" | "varies";
-  signType: string | null;
-  majorLocation: string | null;
-  minorLocation: string | null;
-  movement: string | null;
-  repeated: string | null;
-  handshape: string | null;
-  nonDominantHandshape: string | null;
-}
-interface FactsFile {
-  source: { name: string; citation: string; license: string; note: string };
-  signs: Record<string, SignFacts>;
-}
-
 const FRAMES_PER_SECOND = 16;
 
 // Plain-language labels for the ASL-LEX codes the app shows.
@@ -81,7 +67,7 @@ export class SignGuide {
         const base = import.meta.env.BASE_URL;
         const [references, facts] = await Promise.all([
           fetch(`${base}data/sign-references.json`).then((response) => response.json() as Promise<ReferenceFile>),
-          fetch(`${base}data/sign-facts.json`).then((response) => response.json() as Promise<FactsFile>),
+          loadSignFacts(),
         ]);
         this.data = references;
         this.factData = facts;
@@ -115,7 +101,7 @@ export class SignGuide {
     this.title.textContent = titleCase(sign.gloss);
     this.body.setAttribute("aria-label", `Animated hand position for the sign ${sign.gloss}`);
     this.closeup.setAttribute("aria-label", `Close-up of the hand shape for the sign ${sign.gloss}`);
-    this.renderFacts(this.factData!.signs[signId], Boolean(sign.otherFrames));
+    this.renderFacts(this.factData!.signs[signId], Boolean(sign.otherFrames), lookAlikesOf(signId, this.factData!.signs).map((id) => this.data!.signs[id]?.gloss ?? id));
     const origin = sign.provenance === "recorded" ? this.data!.recordedAttribution ?? "Recorded for this app; only hand landmarks are kept." : this.data!.attribution;
     this.attribution.textContent = `${origin} Sign details: ${this.factData!.source.name} (${this.factData!.source.citation}), ${this.factData!.source.license}. ${this.factData!.source.note}`;
     this.list.querySelectorAll("button").forEach((button) => {
@@ -128,7 +114,7 @@ export class SignGuide {
   }
 
   /** Verified facts first; the animation caption states what the animation does not show. */
-  private renderFacts(facts: SignFacts | undefined, showsOtherHand: boolean): void {
+  private renderFacts(facts: SignFacts | undefined, showsOtherHand: boolean, lookAlikes: string[]): void {
     const rows: Array<[string, string]> = [];
     if (facts) {
       const hands = { one: "One hand", two: "Two hands", varies: "Forms differ: some use one hand, some two" }[facts.hands];
@@ -147,6 +133,7 @@ export class SignGuide {
         rows.push(["Handshape", `${handshapeLabel(facts.handshape)}${other}`]);
       }
     }
+    if (lookAlikes.length) rows.push(["Looks like", `${lookAlikes.join(", ")} (same ASL-LEX coding; this app cannot reliably tell them apart)`]);
     this.facts.replaceChildren(...rows.flatMap(([term, value]) => {
       const dt = document.createElement("dt");
       dt.textContent = term;
