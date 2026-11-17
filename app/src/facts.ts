@@ -2,7 +2,7 @@
 // built on them. Pure data code with one fetch, shared by the tutorial and the results panel.
 
 export interface SignFacts {
-  hands: "one" | "two" | "varies";
+  hands: "one" | "two" | "varies" | "unknown";
   signType: string | null;
   majorLocation: string | null;
   minorLocation: string | null;
@@ -32,7 +32,7 @@ export function loadSignFacts(): Promise<FactsFile> {
 const MATCHING_FIELDS = ["hands", "majorLocation", "minorLocation", "movement", "repeated", "handshape", "nonDominantHandshape"] as const;
 
 export function lookAlike(a: SignFacts | undefined, b: SignFacts | undefined): boolean {
-  if (!a || !b || a.hands === "varies") return false;
+  if (!a || !b || a.hands === "varies" || a.hands === "unknown") return false;
   // A field ASL-LEX leaves out (its forms disagree) can never count as a match.
   return MATCHING_FIELDS.every((field) => a[field] !== null && a[field] === b[field]);
 }

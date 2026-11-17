@@ -68,7 +68,9 @@ async function loadSigns(): Promise<void> {
 function updateHint(): void {
   const hands = facts[signSelect.value]?.hands;
   signHint.textContent = hands === "two" ? "This sign uses two hands: keep both hands and both shoulders in view."
-    : hands === "one" ? "This sign uses one hand: keep that hand and both shoulders in view." : "Keep your hands and both shoulders in view.";
+    : hands === "one" ? "This sign uses one hand: keep that hand and both shoulders in view."
+    : hands === "varies" ? "ASL-LEX lists forms with one and with two hands: sign the form you want taught and keep both shoulders and every hand you use in view."
+    : "Keep your hands and both shoulders in view.";
 }
 
 function loop(): void {

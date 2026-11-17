@@ -30,6 +30,17 @@
    "handshape": "flat_b",
    "nonDominantHandshape": "flat_b"
   },
+  "popsign-v1-0:game:another": {
+   "aslLexEntries": 0,
+   "hands": "unknown",
+   "signType": null,
+   "majorLocation": null,
+   "minorLocation": null,
+   "movement": null,
+   "repeated": null,
+   "handshape": null,
+   "nonDominantHandshape": null
+  },
   "popsign-v1-0:game:apple": {
    "aslLexEntries": 1,
    "hands": "one",
@@ -85,6 +96,17 @@
    "handshape": "open_b",
    "nonDominantHandshape": "open_b"
   },
+  "popsign-v1-0:game:better": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "Chin",
+   "movement": "Curved",
+   "repeated": "0",
+   "handshape": "open_b",
+   "nonDominantHandshape": "NA"
+  },
   "popsign-v1-0:game:blue": {
    "aslLexEntries": 1,
    "hands": "one",
@@ -117,6 +139,94 @@
    "repeated": "1",
    "handshape": "open_b",
    "nonDominantHandshape": "open_b"
+  },
+  "popsign-v1-0:game:boy": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "Forehead",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "flat_o",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:bye": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Neutral",
+   "minorLocation": "Neutral",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "5",
+   "nonDominantHandshape": "NA"
+  },
+  "popsign-v1-0:game:can": {
+   "aslLexEntries": 2,
+   "hands": "two",
+   "signType": null,
+   "majorLocation": null,
+   "minorLocation": null,
+   "movement": null,
+   "repeated": null,
+   "handshape": null,
+   "nonDominantHandshape": null
+  },
+  "popsign-v1-0:game:cat": {
+   "aslLexEntries": 3,
+   "hands": "varies",
+   "signType": null,
+   "majorLocation": "Head",
+   "minorLocation": "CheekNose",
+   "movement": "Straight",
+   "repeated": "1",
+   "handshape": null,
+   "nonDominantHandshape": null
+  },
+  "popsign-v1-0:game:chocolate": {
+   "aslLexEntries": 1,
+   "hands": "two",
+   "signType": "AsymmetricalDifferentHandshape",
+   "majorLocation": "Hand",
+   "minorLocation": "PalmBack",
+   "movement": "Circular",
+   "repeated": "1",
+   "handshape": "c",
+   "nonDominantHandshape": "B"
+  },
+  "popsign-v1-0:game:closet": {
+   "aslLexEntries": 2,
+   "hands": "two",
+   "signType": null,
+   "majorLocation": null,
+   "minorLocation": null,
+   "movement": null,
+   "repeated": null,
+   "handshape": null,
+   "nonDominantHandshape": null
+  },
+  "popsign-v1-0:game:cloud": {
+   "aslLexEntries": 4,
+   "hands": "two",
+   "signType": "SymmetricalOrAlternating",
+   "majorLocation": null,
+   "minorLocation": null,
+   "movement": null,
+   "repeated": "1",
+   "handshape": null,
+   "nonDominantHandshape": null
+  },
+  "popsign-v1-0:game:cow": {
+   "aslLexEntries": 1,
+   "hands": "one",
+   "signType": "OneHanded",
+   "majorLocation": "Head",
+   "minorLocation": "Forehead",
+   "movement": "None",
+   "repeated": "1",
+   "handshape": "y",
+   "nonDominantHandshape": "NA"
   }
  }
 }

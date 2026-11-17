@@ -347,8 +347,18 @@ PYTHONPATH=training .venv/bin/python training/export_temporal_onnx.py \
 
 The current browser model also removes the upper-body anchor block. Add
 `--drop-body-anchors` to both commands and use the
-`popsign-ten-sign-gru-v3-hands-only` output directory to reproduce it
-(134 features per frame).
+`popsign-ten-sign-gru-v3-hands-only` output directory to reproduce the ten-sign model
+(134 features per frame). The current 20-sign browser model combines the two extraction
+manifests first:
+
+```sh
+.venv/bin/python training/merge_extraction_manifests.py \
+  training-artifacts/popsign-ten-sign-v3-extraction/extraction-manifest.json \
+  training-artifacts/popsign-next-ten-v3-extraction/extraction-manifest.json \
+  --output training-artifacts/popsign-twenty-sign-v3-extraction/extraction-manifest.json
+```
+
+and then uses that manifest and `popsign-twenty-sign-gru-v3-hands-only` in the two commands.
 
 The browser preprocessor also zeroes the non-dominant hand block, because the
 PopSign training clips almost never show a second hand. Model files stay

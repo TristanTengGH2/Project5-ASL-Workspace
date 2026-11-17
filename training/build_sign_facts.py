@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 from pathlib import Path
 
 # ASL-LEX SignType values grouped into hand counts (Battison's sign types).
@@ -36,9 +37,14 @@ def main() -> int:
         if sign["status"] != "supported":
             continue
         gloss = sign["displayGloss"].lower()
-        entries = [row for row in rows if row["LemmaID"].lower() == gloss or row["EntryID"].lower() == gloss]
+        # ASL-LEX numbers variant forms of one sign (cloud_1, cloud_2); other glosses merely
+        # containing the word (tall_2, candy_1) are different signs.
+        pattern = re.compile(rf"^{re.escape(gloss)}(_\d+)?$", re.IGNORECASE)
+        entries = [row for row in rows if pattern.match(row["LemmaID"]) or pattern.match(row["EntryID"])]
         if not entries:
-            print(f"{gloss:9s} not in ASL-LEX; no facts written")
+            signs[sign["id"]] = {"aslLexEntries": 0, "hands": "unknown", **{key: None for key in (
+                "signType", "majorLocation", "minorLocation", "movement", "repeated", "handshape", "nonDominantHandshape")}}
+            print(f"{gloss:9s} not in ASL-LEX; recorded as unknown")
             continue
         types = [row["SignType.2.0"] for row in entries]
         counts = {"one" if t in ONE_HAND else "two" if t in TWO_HANDS else "other" for t in types}

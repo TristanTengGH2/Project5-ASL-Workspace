@@ -117,7 +117,7 @@ export class SignGuide {
   private renderFacts(facts: SignFacts | undefined, showsOtherHand: boolean, lookAlikes: string[]): void {
     const rows: Array<[string, string]> = [];
     if (facts) {
-      const hands = { one: "One hand", two: "Two hands", varies: "Forms differ: some use one hand, some two" }[facts.hands];
+      const hands = { one: "One hand", two: "Two hands", varies: "Forms differ: some use one hand, some two", unknown: "Not in ASL-LEX, so not verified" }[facts.hands];
       rows.push(["Hands", hands]);
       if (facts.majorLocation) {
         const place = LOCATION_WORDS[facts.majorLocation] ?? facts.majorLocation.toLowerCase();
@@ -141,12 +141,14 @@ export class SignGuide {
       dd.textContent = titleCase(value);
       return [dt, dd];
     }));
-    const twoHanded = facts?.hands !== "one";
+    const own = "This animation shows the signing hand as tracked in one PopSign example.";
+    const hands = facts?.hands ?? "unknown";
     this.caption.textContent = showsOtherHand
       ? "The solid hand is the signing hand. The faded hand is the other hand."
-      : twoHanded
-      ? "This sign uses two hands. The example was recorded with one hand, so only the signing hand is drawn and the other hand is not shown. Sign it with both hands; the app reads your signing hand."
-      : "This animation shows the signing hand as tracked in one PopSign example.";
+      : hands === "one" ? own
+      : hands === "two" ? "This sign uses two hands. The example was recorded with one hand, so only the signing hand is drawn and the other hand is not shown. Sign it with both hands; the app reads your signing hand."
+      : hands === "varies" ? `Some forms of this sign use two hands. ${own} The other hand is not drawn.`
+      : `${own} ASL-LEX has no entry for this sign, so the number of hands is not verified.`;
   }
 
   private play(): void {

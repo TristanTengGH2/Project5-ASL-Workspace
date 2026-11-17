@@ -73,7 +73,7 @@ if (!validate(catalog)) {
   const facts = JSON.parse(await readFile(new URL("../../catalog/sign-facts.json", import.meta.url), "utf8"));
   for (const id of supported) {
     if (!facts.signs[id]) semanticErrors.push(`${id}: missing sign facts`);
-    else if (!["one", "two", "varies"].includes(facts.signs[id].hands)) semanticErrors.push(`${id}: facts need a hands value`);
+    else if (!["one", "two", "varies", "unknown"].includes(facts.signs[id].hands)) semanticErrors.push(`${id}: facts need a hands value`);
   }
   for (const id of Object.keys(facts.signs)) if (!supported.has(id)) semanticErrors.push(`${id}: facts do not belong to a supported catalog sign`);
 
